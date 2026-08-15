@@ -19,6 +19,7 @@ import { guardrails } from '../security/guardrails.js';
 import { workflowEngine } from '../workflows/engine.js';
 import { orchestrator } from '../core/orchestrator.js';
 import { businessBriefEngine } from '../agents/businessBriefEngine.js';
+import { leadAgent } from '../agents/leadAgent.js';
 
 // Setup Test Tenant
 let testOrg1;
@@ -316,4 +317,94 @@ test('15. Central Orchestrator End-to-End Flow', async () => {
   assert.equal(res.success, true);
   assert.equal(res.type, 'TASK_OPERATION');
   assert.equal(res.approvalRequired, false);
+});
+
+test('16. Real Estate Lead Fields CRUD & Site Visit Filtering', () => {
+  const reLead = leadRepo.create({
+    orgId: testOrg1.id,
+    name: 'Vikram Joshi',
+    email: 'vikram.j@testrealty.com',
+    propertyType: '3BHK Apartment',
+    budgetMin: 80,
+    budgetMax: 100,
+    preferredLocation: 'Vaishali Nagar, Jaipur',
+    bedrooms: 3,
+    purpose: 'Self-use',
+    buyOrRent: 'Buy',
+    siteVisitDate: '2026-08-20',
+    status: 'QUALIFIED',
+    priority: 'HIGH',
+  });
+
+  assert.equal(reLead.property_type, '3BHK Apartment');
+  assert.equal(reLead.budget_max, 100);
+  assert.equal(reLead.bedrooms, 3);
+  assert.equal(reLead.preferred_location, 'Vaishali Nagar, Jaipur');
+  assert.equal(reLead.site_visit_date, '2026-08-20');
+
+  // Verify search by location & property type
+  const searchResults = leadRepo.listByOrg(testOrg1.id, { search: 'Vaishali' });
+  assert.ok(searchResults.some(l => l.id === reLead.id));
+});
+
+test('17. AI Real Estate Lead Qualification & Missing Information Extraction', async () => {
+  const inputPrompt = 'Customer wants 3BHK in Jaipur, budget 80 lakh, wants to visit this weekend.';
+  const qualification = await leadAgent.qualifyAndExtractRequirements(inputPrompt, {
+    orgId: testOrg1.id,
+    user: ownerUser,
+  });
+
+  assert.equal(qualification.priority, 'HIGH');
+  assert.ok(qualification.requirement.includes('3BHK'));
+  assert.ok(qualification.budget.includes('80'));
+  assert.ok(qualification.location.includes('Jaipur'));
+  assert.ok(qualification.nextAction.toLowerCase().includes('site visit'));
+  assert.ok(Array.isArray(qualification.missingInfo));
+});
+
+test('18. Follow-ups Needing Attention Prioritization Order', () => {
+  const attentionList = leadRepo.getFollowupsNeedingAttention(testOrg1.id, 10);
+  assert.ok(Array.isArray(attentionList));
+  assert.ok(attentionList.length > 0);
+
+  // Overdue leads must be ranked ahead of non-overdue low priority leads
+  const todayStr = new Date().toISOString().slice(0, 10);
+  if (attentionList.length >= 2) {
+    const first = attentionList[0];
+    const isFirstOverdue = first.next_followup && first.next_followup < todayStr;
+    const isFirstUrgent = first.priority === 'URGENT' || first.priority === 'HIGH';
+    assert.ok(isFirstOverdue || isFirstUrgent);
+  }
+});
+
+test('19. AI Real Estate Follow-up Draft Generation with Governance', async () => {
+  const leads = leadRepo.listByOrg(testOrg1.id);
+  const lead = leads[0];
+
+  const draft = await leadAgent.generateRealEstateFollowupDraft(lead.id, {
+    customIntent: "Customer hasn't replied for 3 days.",
+  }, {
+    orgId: testOrg1.id,
+    user: ownerUser,
+  });
+
+  assert.equal(draft.requiresHumanApproval, true);
+  assert.equal(draft.dispatched, false);
+  assert.ok(draft.body.length > 20);
+  assert.ok(draft.statusNote.includes('No communication provider configured'));
+});
+
+test('20. Business Impact Telemetry (No Fabricated Numbers)', () => {
+  // Populated org returns real counts
+  const impact = businessBriefEngine.calculateBusinessImpact(testOrg1.id);
+  assert.equal(impact.hasData, true);
+  assert.ok(typeof impact.metrics.leadsManaged === 'number');
+  assert.ok(typeof impact.metrics.completedTasks === 'number');
+  assert.ok(typeof impact.metrics.responseDraftsGenerated === 'number');
+
+  // Empty org returns "Insufficient data."
+  const emptyOrg = orgRepo.create({ name: 'Empty Agency', slug: `empty-${Date.now()}` });
+  const emptyImpact = businessBriefEngine.calculateBusinessImpact(emptyOrg.id);
+  assert.equal(emptyImpact.hasData, false);
+  assert.equal(emptyImpact.message, 'Insufficient data.');
 });

@@ -15,12 +15,12 @@ const AssistantQuerySchema = z.object({
   query: z.string().min(1).max(1000),
 });
 
-const ClassifyLeadSchema = z.object({
-  name: z.string(),
-  company: z.string().optional().nullable(),
-  email: z.string().optional().nullable(),
-  phone: z.string().optional().nullable(),
-  notes: z.string().optional().nullable(),
+const QualifyRequirementSchema = z.object({
+  text: z.string().min(1).max(1000),
+});
+
+const DraftRequestSchema = z.object({
+  scenario: z.string().optional().nullable(),
 });
 
 // Process Natural Language Assistant Query
@@ -39,7 +39,7 @@ router.post('/assistant', requirePermission(PERMISSIONS.AI_USE), async (req, res
   }
 });
 
-// Generate Real Business Daily Brief
+// Generate Real Estate Business Daily Brief
 router.get('/daily-brief', requirePermission(PERMISSIONS.AI_USE), async (req, res, next) => {
   try {
     const brief = await businessBriefEngine.generateDailyBrief(req.user.orgId, {
@@ -51,28 +51,41 @@ router.get('/daily-brief', requirePermission(PERMISSIONS.AI_USE), async (req, re
   }
 });
 
-// Classify & Enrich a Lead
-router.post('/classify-lead', requirePermission(PERMISSIONS.AI_USE), async (req, res, next) => {
+// Real Estate Lead Requirement Extraction & Qualification
+router.post('/qualify-requirement', requirePermission(PERMISSIONS.AI_USE), async (req, res, next) => {
   try {
-    const data = ClassifyLeadSchema.parse(req.body);
-    const enrichment = await leadAgent.classifyAndEnrichLead(data, {
+    const data = QualifyRequirementSchema.parse(req.body);
+    const qualification = await leadAgent.qualifyAndExtractRequirements(data.text, {
       orgId: req.user.orgId,
       user: req.user,
     });
-    res.json({ success: true, data: enrichment });
+    res.json({ success: true, data: qualification });
   } catch (err) {
     next(err);
   }
 });
 
-// Generate Follow-up Draft for Lead
-router.get('/leads/:id/draft', requirePermission(PERMISSIONS.AI_USE), async (req, res, next) => {
+// Generate Real Estate Follow-up Draft
+router.post('/leads/:id/followup-draft', requirePermission(PERMISSIONS.AI_USE), async (req, res, next) => {
   try {
-    const draft = await leadAgent.generateFollowupDraft(req.params.id, {
+    const body = DraftRequestSchema.parse(req.body || {});
+    const draft = await leadAgent.generateRealEstateFollowupDraft(req.params.id, {
+      customIntent: body.scenario,
+    }, {
       orgId: req.user.orgId,
       user: req.user,
     });
     res.json({ success: true, data: draft });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Business Impact Metrics (No fabricated numbers)
+router.get('/business-impact', requirePermission(PERMISSIONS.AI_USE), (req, res, next) => {
+  try {
+    const impact = businessBriefEngine.calculateBusinessImpact(req.user.orgId);
+    res.json({ success: true, data: impact });
   } catch (err) {
     next(err);
   }

@@ -61,7 +61,7 @@ export class APIClient {
     return this.request('/dashboard/summary');
   }
 
-  // Leads
+  // Leads CRM
   static getLeads(params = {}) {
     const query = new URLSearchParams(params).toString();
     return this.request(`/leads${query ? `?${query}` : ''}`);
@@ -73,6 +73,14 @@ export class APIClient {
 
   static getFollowups() {
     return this.request('/leads/followups');
+  }
+
+  static getFollowupsNeedingAttention(limit = 20) {
+    return this.request(`/leads/attention?limit=${limit}`);
+  }
+
+  static getSiteVisits() {
+    return this.request('/leads/site-visits');
   }
 
   static createLead(data) {
@@ -118,12 +126,16 @@ export class APIClient {
     return this.request('/ai/daily-brief');
   }
 
-  static classifyLead(leadData) {
-    return this.request('/ai/classify-lead', { method: 'POST', body: JSON.stringify(leadData) });
+  static qualifyRequirement(text) {
+    return this.request('/ai/qualify-requirement', { method: 'POST', body: JSON.stringify({ text }) });
   }
 
-  static getLeadDraft(leadId) {
-    return this.request(`/ai/leads/${leadId}/draft`);
+  static generateFollowupDraft(leadId, scenario = null) {
+    return this.request(`/ai/leads/${leadId}/followup-draft`, { method: 'POST', body: JSON.stringify({ scenario }) });
+  }
+
+  static getBusinessImpact() {
+    return this.request('/ai/business-impact');
   }
 
   static getAiUsage() {

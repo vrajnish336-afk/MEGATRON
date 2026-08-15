@@ -6,9 +6,39 @@ export function runMigrations() {
   logger.info('Running database schema migrations...');
   try {
     const rawDb = db.raw;
+
+    // Run base DDL statements
     for (const sql of DDL_STATEMENTS) {
       rawDb.exec(sql);
     }
+
+    // Check & safely apply incremental column additions for existing leads table
+    const tableInfo = rawDb.prepare(`PRAGMA table_info(leads);`).all();
+    const existingCols = new Set(tableInfo.map(col => col.name));
+
+    const realEstateColumns = [
+      { name: 'property_type', type: 'TEXT' },
+      { name: 'budget_min', type: 'REAL' },
+      { name: 'budget_max', type: 'REAL' },
+      { name: 'preferred_location', type: 'TEXT' },
+      { name: 'bedrooms', type: 'INTEGER' },
+      { name: 'purpose', type: 'TEXT' },
+      { name: 'buy_or_rent', type: 'TEXT' },
+      { name: 'site_visit_date', type: 'TEXT' },
+      { name: 'lead_source', type: 'TEXT' },
+      { name: 'preferred_contact_time', type: 'TEXT' },
+    ];
+
+    for (const col of realEstateColumns) {
+      if (!existingCols.has(col.name)) {
+        logger.info(`Applying migration: adding column '${col.name}' to leads table...`);
+        rawDb.exec(`ALTER TABLE leads ADD COLUMN ${col.name} ${col.type};`);
+      }
+    }
+
+    // Add index on site_visit_date if not present
+    rawDb.exec(`CREATE INDEX IF NOT EXISTS idx_leads_site_visit ON leads(org_id, site_visit_date);`);
+
     logger.info('Database schema migrations completed successfully.');
     return true;
   } catch (err) {

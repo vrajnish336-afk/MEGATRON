@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MEGADRONE for Real Estate | Never Miss a Lead. Never Lose Track of Follow-ups.</title>
+  <meta name="description" content="AI Business Operations & Follow-up Governance Platform for Real Estate Agencies and Brokerage Teams.">
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  
+  <!-- Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  
+  <!-- Design System CSS -->
+  <link rel="stylesheet" href="/css/app.css">
+
+  <style>
+    .landing-header {
+      border-bottom: 1px solid var(--border-subtle);
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(12px);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      padding: 16px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .landing-hero {
+      padding: 90px 24px 60px 24px;
+      text-align: center;
+      max-width: 960px;
+      margin: 0 auto;
+    }
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border-radius: var(--radius-full);
+      background: rgba(59, 130, 246, 0.15);
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      color: #60A5FA;
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 24px;
+    }
+    .hero-title {
+      font-size: 3.2rem;
+      font-weight: 800;
+      line-height: 1.15;
+      letter-spacing: -0.03em;
+      color: #fff;
+      margin-bottom: 20px;
+    }
+    .hero-subtitle {
+      font-size: 1.15rem;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      max-width: 780px;
+      margin: 0 auto 36px auto;
+    }
+    .section-wrap {
+      padding: 80px 24px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .section-title {
+      font-size: 2rem;
+      font-weight: 800;
+      color: #fff;
+      text-align: center;
+      letter-spacing: -0.02em;
+      margin-bottom: 12px;
+    }
+    .section-subtitle {
+      font-size: 1rem;
+      color: var(--text-secondary);
+      text-align: center;
+      max-width: 650px;
+      margin: 0 auto 48px auto;
+    }
+    .feature-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 30px;
+      transition: all var(--transition-normal);
+    }
+    .feature-card:hover {
+      border-color: var(--border-strong);
+      transform: translateY(-2px);
+    }
+    .step-number {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: var(--accent-primary-light);
+      color: var(--accent-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      margin-bottom: 16px;
+    }
+    .pricing-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 36px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .pricing-card.featured {
+      border-color: var(--accent-primary);
+      box-shadow: 0 0 25px rgba(59, 130, 246, 0.2);
+      position: relative;
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header class="landing-header">
+    <div style="display: flex; align-items: center; gap: 12px;">
+      <div class="brand-logo" style="width: 34px; height: 34px; font-size: 1rem;">
+        <i class="fas fa-building-circle-check"></i>
+      </div>
+      <div style="font-weight: 800; color: #fff; font-size: 1.1rem;">
+        MEGADRONE <span style="font-size: 0.7rem; color: #60A5FA; text-transform: uppercase;">Real Estate OS</span>
+      </div>
+    </div>
+    <div style="display: flex; gap: 12px; align-items: center;">
+      <a href="#features" class="nav-item" style="display: inline-block;">Features</a>
+      <a href="#security" class="nav-item" style="display: inline-block;">Security</a>
+      <a href="/index.html#/login" class="btn btn-primary btn-sm">
+        <i class="fas fa-arrow-right-to-bracket"></i> Launch Live Demo
+      </a>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="landing-hero">
+    <div class="hero-badge">
+      <i class="fas fa-shield-halved"></i> AI Business Operations Platform • Built for Real Estate Teams
+    </div>
+    <h1 class="hero-title">
+      Never Miss a Lead.<br>Never Lose Track of Follow-ups.
+    </h1>
+    <p class="hero-subtitle">
+      MEGADRONE helps real-estate agencies and brokerage teams organize property inquiries, prioritize buyer follow-ups, schedule site visits, and coordinate business operations with transparent AI-assisted automation and strict human approval governance.
+    </p>
+    <div style="display: flex; justify-content: center; gap: 14px; flex-wrap: wrap;">
+      <a href="/index.html#/login" class="btn btn-ai" style="padding: 14px 28px; font-size: 1rem;">
+        <i class="fas fa-play"></i> Explore Live Real Estate Demo
+      </a>
+      <a href="#how-it-works" class="btn btn-secondary" style="padding: 14px 24px; font-size: 1rem;">
+        <i class="fas fa-circle-info"></i> How It Works
+      </a>
+    </div>
+  </section>
+
+  <!-- Problem Section -->
+  <section class="section-wrap" style="background: rgba(15, 23, 42, 0.4); border-radius: var(--radius-lg); border: 1px solid var(--border-subtle);">
+    <h2 class="section-title">The Real Estate Operational Bottleneck</h2>
+    <p class="section-subtitle">Why traditional brokerages lose qualified buyers and high-ticket transactions</p>
+    <div class="grid-3">
+      <div class="feature-card">
+        <div style="color: #F87171; font-size: 1.5rem; margin-bottom: 12px;"><i class="fas fa-clock-rotate-left"></i></div>
+        <h3 style="color: #fff; font-size: 1.1rem; font-weight: 700; margin-bottom: 8px;">Delayed Buyer Follow-ups</h3>
+        <p style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.6;">
+          Inquiries from portals and ads get scattered across agent WhatsApps. When follow-ups slip by 48 hours, active buyers purchase elsewhere.
+        </p>
+      </div>
+      <div class="feature-card">
+        <div style="color: #FBBF24; font-size: 1.5rem; margin-bottom: 12px;"><i class="fas fa-file-circle-question"></i></div>
+        <h3 style="color: #fff; font-size: 1.1rem; font-weight: 700; margin-bottom: 8px;">Unstructured Requirements</h3>
+        <p style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.6;">
+          Agents spend hours manually extracting budgets, locations, and bedroom preferences from unformatted phone call notes and chat threads.
+        </p>
+      </div>
+      <div class="feature-card">
+        <div style="color: #60A5FA; font-size: 1.5rem; margin-bottom: 12px;"><i class="fas fa-shield-xmark"></i></div>
+        <h3 style="color: #fff; font-size: 1.1rem; font-weight: 700; margin-bottom: 8px;">Unchecked AI Chatbots</h3>
+        <p style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.6;">
+          Generic chatbots hallucinate pricing, send unauthorized messages to clients, and lack human supervisor approval controls.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Solution & How It Works -->
+  <section class="section-wrap" id="how-it-works">
+    <h2 class="section-title">How MEGADRONE Powers Your Brokerage</h2>
+    <p class="section-subtitle">A transparent, governed pipeline built specifically for property transactions</p>
+    <div class="grid-4">
+      <div class="feature-card">
+        <div class="step-number">1</div>
+        <h4 style="color: #fff; font-weight: 700; margin-bottom: 6px;">New Lead Ingestion</h4>
+        <p style="color: var(--text-secondary); font-size: 0.85rem; line-height: 1.5;">
+          Capture property inquiries across web forms, portals, or direct phone call notes.
+        </p>
+      </div>
+      <div class="feature-card">
+        <div class="step-number">2</div>
+        <h4 style="color: #fff; font-weight: 700; margin-bottom: 6px;">AI Qualification</h4>
+        <p style="color: var(--text-secondary); font-size: 0.85rem; line-height: 1.5;">
+          Instantly extracts configuration (e.g. 3BHK), budget, location, and flags missing information.
+        </p>
+      </div>
+      <div class="feature-card">
+        <div class="step-number">3</div>
+        <h4 style="color: #fff; font-weight: 700; margin-bottom: 6px;">Follow-up Drafting</h4>
+        <p style="color: var(--text-secondary); font-size: 0.85rem; line-height: 1.5;">
+          Generates tailored re-engagement drafts and site visit confirmations for specific scenarios.
+        </p>
+      </div>
+      <div class="feature-card">
+        <div class="step-number">4</div>
+        <h4 style="color: #fff; font-weight: 700; margin-bottom: 6px;">Human Approval</h4>
+        <p style="color: var(--text-secondary); font-size: 0.85rem; line-height: 1.5;">
+          Broker or sales manager authorizes the draft before any external message is dispatched.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Core Real Estate Features -->
+  <section class="section-wrap" id="features">
+    <h2 class="section-title">Core Operating Capabilities</h2>
+    <p class="section-subtitle">Engineered to eliminate administrative friction for brokers, managers, and agents</p>
+    <div class="grid-3">
+      <div class="feature-card">
+        <div style="color: var(--accent-primary); font-size: 1.3rem; margin-bottom: 10px;"><i class="fas fa-newspaper"></i></div>
+        <h3 style="color: #fff; font-size: 1.05rem; font-weight: 700; margin-bottom: 6px;">Today's Business Brief</h3>
+        <p style="color: var(--text-secondary); font-size: 0.85rem; line-height: 1.6;">
+          Real-time executive briefing of new leads, overdue follow-ups, scheduled site visits, active negotiations, and won contracts with zero fabricated numbers.
+        </p>
+      </div>
+      <div class="feature-card">
+        <div style="color: var(--accent-ai); font-size: 1.3rem; margin-bottom: 10px;"><i class="fas fa-sparkles"></i></div>
+        <h3 style="color: #fff; font-size: 1.05rem; font-weight: 700; margin-bottom: 6px;">Follow-ups Needing Attention</h3>
+        <p style="color: var(--text-secondary); font-size: 0.85rem; line-height: 1.6;">
+          Prioritized attention queue automatically ranks buyers by overdue status, urgency tier, and upcoming site visit dates.
+        </p>
+      </div>
+      <div class="feature-card">
+        <div style="color: var(--accent-info); font-size: 1.3rem; margin-bottom: 10px;"><i class="fas fa-terminal"></i></div>
+        <h3 style="color: #fff; font-size: 1.05rem; font-weight: 700; margin-bottom: 6px;">Multilingual AI Console</h3>
+        <p style="color: var(--text-secondary); font-size: 0.85rem; line-height: 1.6;">
+          Query live CRM records in Hindi or English (e.g. <em>"आज मेरे सबसे important customers कौन हैं?"</em>) with direct database tool execution.
+        </p>
+      </div>
+      <div class="feature-card">
+        <div style="color: var(--accent-warning); font-size: 1.3rem; margin-bottom: 10px;"><i class="fas fa-bolt"></i></div>
+        <h3 style="color: #fff; font-size: 1.05rem; font-weight: 700; margin-bottom: 6px;">Automated Workflows</h3>
+        <p style="color: var(--text-secondary); font-size: 0.85rem; line-height: 1.6;">
+          Trigger-condition-action engine automatically creates tasks, enriches high-value leads, and routes approvals without manual data entry.
+        </p>
+      </div>
+      <div class="feature-card">
+        <div style="color: var(--accent-success); font-size: 1.3rem; margin-bottom: 10px;"><i class="fas fa-chart-line"></i></div>
+        <h3 style="color: #fff; font-size: 1.05rem; font-weight: 700; margin-bottom: 6px;">Business Impact Telemetry</h3>
+        <p style="color: var(--text-secondary); font-size: 0.85rem; line-height: 1.6;">
+          Transparently measures completed deliverables, managed leads, generated drafts, and governed approval actions.
+        </p>
+      </div>
+      <div class="feature-card">
+        <div style="color: var(--accent-danger); font-size: 1.3rem; margin-bottom: 10px;"><i class="fas fa-shield-halved"></i></div>
+        <h3 style="color: #fff; font-size: 1.05rem; font-weight: 700; margin-bottom: 6px;">Human Approval Queue</h3>
+        <p style="color: var(--text-secondary); font-size: 0.85rem; line-height: 1.6;">
+          Mandatory authorization gate for external customer outreach. No communications are dispatched automatically.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Security Demonstration Section -->
+  <section class="section-wrap" id="security" style="background: var(--bg-card); border-radius: var(--radius-lg); border: 1px solid var(--border-subtle);">
+    <h2 class="section-title"><i class="fas fa-lock" style="color: var(--accent-primary); margin-right: 8px;"></i> Security & Governance Architecture</h2>
+    <p class="section-subtitle">Enterprise-grade security standards built into the core operating layer</p>
+    <div class="grid-2">
+      <div style="display: flex; gap: 14px; align-items: flex-start;">
+        <div style="color: var(--accent-success); font-size: 1.3rem; margin-top: 2px;"><i class="fas fa-ban"></i></div>
+        <div>
+          <h4 style="color: #fff; font-weight: 700; font-size: 0.95rem;">Hard Financial Transaction Guardrails</h4>
+          <p style="color: var(--text-secondary); font-size: 0.85rem; margin-top: 4px;">
+            MEGADRONE hard-blocks any attempt to automate money movements, wire transfers, or financial transactions. AI operates purely as an advisory and workflow layer.
+          </p>
+        </div>
+      </div>
+      <div style="display: flex; gap: 14px; align-items: flex-start;">
+        <div style="color: var(--accent-primary); font-size: 1.3rem; margin-top: 2px;"><i class="fas fa-users-gear"></i></div>
+        <div>
+          <h4 style="color: #fff; font-weight: 700; font-size: 0.95rem;">Multi-Tenant RBAC Isolation</h4>
+          <p style="color: var(--text-secondary); font-size: 0.85rem; margin-top: 4px;">
+            Strict organization-level boundaries guarantee that no agency can view or access another brokerage's customer records or property listings.
+          </p>
+        </div>
+      </div>
+      <div style="display: flex; gap: 14px; align-items: flex-start;">
+        <div style="color: var(--accent-warning); font-size: 1.3rem; margin-top: 2px;"><i class="fas fa-fingerprint"></i></div>
+        <div>
+          <h4 style="color: #fff; font-weight: 700; font-size: 0.95rem;">Immutable Sanitized Audit Trail</h4>
+          <p style="color: var(--text-secondary); font-size: 0.85rem; margin-top: 4px;">
+            Every user action, AI tool invocation, and approval decision is logged. Passwords, tokens, and credentials are automatically redacted before storage.
+          </p>
+        </div>
+      </div>
+      <div style="display: flex; gap: 14px; align-items: flex-start;">
+        <div style="color: var(--accent-ai); font-size: 1.3rem; margin-top: 2px;"><i class="fas fa-eye-slash"></i></div>
+        <div>
+          <h4 style="color: #fff; font-weight: 700; font-size: 0.95rem;">Outbound Data Privacy Policy</h4>
+          <p style="color: var(--text-secondary); font-size: 0.85rem; margin-top: 4px;">
+            Configurable data classification controls prohibit confidential client data from leaving local on-premise infrastructure.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Pricing Placeholder Section -->
+  <section class="section-wrap" style="text-align: center;">
+    <h2 class="section-title">Transparent Tiered Pricing</h2>
+    <p class="section-subtitle">Simple, predictable pricing for boutique agencies and expanding brokerage firms</p>
+    <div class="grid-3" style="text-align: left;">
+      <div class="pricing-card">
+        <div>
+          <div style="font-weight: 700; color: #fff; font-size: 1.2rem;">Starter Agency</div>
+          <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 2px;">For independent brokers & boutique teams</div>
+          <div style="font-size: 2.2rem; font-weight: 800; color: #fff; margin: 20px 0 10px 0;">₹4,999 <span style="font-size: 0.9rem; color: var(--text-muted); font-weight: 500;">/ month</span></div>
+          <ul style="color: var(--text-secondary); font-size: 0.85rem; line-height: 2; padding-left: 20px;">
+            <li>Up to 5 Team Members</li>
+            <li>Real Estate CRM & Follow-up Queue</li>
+            <li>Local AI Processing (Zero API Cost)</li>
+            <li>Human Approval Governance</li>
+          </ul>
+        </div>
+        <a href="/index.html#/login" class="btn btn-secondary" style="margin-top: 24px; width: 100%;">Test Starter Demo</a>
+      </div>
+
+      <div class="pricing-card featured">
+        <div>
+          <span class="badge" style="background: var(--accent-primary); color: #fff; position: absolute; top: 16px; right: 16px;">Most Popular</span>
+          <div style="font-weight: 700; color: #fff; font-size: 1.2rem;">Growth Brokerage</div>
+          <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 2px;">For scaling real estate teams & multi-city desks</div>
+          <div style="font-size: 2.2rem; font-weight: 800; color: var(--accent-primary); margin: 20px 0 10px 0;">₹12,499 <span style="font-size: 0.9rem; color: var(--text-muted); font-weight: 500;">/ month</span></div>
+          <ul style="color: var(--text-secondary); font-size: 0.85rem; line-height: 2; padding-left: 20px;">
+            <li>Up to 25 Agents & Managers</li>
+            <li>Automated Workflows & Site Visit Tracker</li>
+            <li>Hybrid Local (Ollama) & Cloud AI Router</li>
+            <li>Full Audit Trail & Business Impact Metrics</li>
+          </ul>
+        </div>
+        <a href="/index.html#/login" class="btn btn-primary" style="margin-top: 24px; width: 100%;">Launch Growth Demo</a>
+      </div>
+
+      <div class="pricing-card">
+        <div>
+          <div style="font-weight: 700; color: #fff; font-size: 1.2rem;">Enterprise Developer</div>
+          <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 2px;">For large developers & franchise brokerages</div>
+          <div style="font-size: 2.2rem; font-weight: 800; color: #fff; margin: 20px 0 10px 0;">Custom <span style="font-size: 0.9rem; color: var(--text-muted); font-weight: 500;">/ annual</span></div>
+          <ul style="color: var(--text-secondary); font-size: 0.85rem; line-height: 2; padding-left: 20px;">
+            <li>Unlimited Team Desks & Multi-Branch Orgs</li>
+            <li>Dedicated On-Premise Ollama Infrastructure</li>
+            <li>Custom CRM Integrations (Salesforce / LeadSquared)</li>
+            <li>Dedicated Technical Account Manager</li>
+          </ul>
+        </div>
+        <a href="#contact" class="btn btn-secondary" style="margin-top: 24px; width: 100%;">Contact Enterprise Sales</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Contact / Request Demo Section -->
+  <section class="section-wrap" id="contact" style="background: rgba(15, 23, 42, 0.6); border-radius: var(--radius-lg); border: 1px solid var(--border-subtle); max-width: 800px; text-align: center;">
+    <h2 class="section-title">Schedule a 1-on-1 Agency Walkthrough</h2>
+    <p class="section-subtitle">See how MEGADRONE helps your brokerage eliminate missed follow-ups</p>
+    <div style="display: inline-flex; gap: 14px; flex-wrap: wrap; justify-content: center;">
+      <a href="/index.html#/login" class="btn btn-primary" style="padding: 12px 28px;">
+        <i class="fas fa-rocket"></i> Try Interactive 5-Minute Demo
+      </a>
+      <a href="mailto:demo@megadrone.ai" class="btn btn-secondary" style="padding: 12px 24px;">
+        <i class="fas fa-envelope"></i> Request Team Pilot
+      </a>
+    </div>
+    <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 20px;">
+      Zero setup fee • Tested on live verified real estate operational workflows
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer style="padding: 40px 24px; border-top: 1px solid var(--border-subtle); text-align: center; font-size: 0.85rem; color: var(--text-muted);">
+    <div style="margin-bottom: 8px;">
+      <strong>MEGADRONE Business OS</strong> — Built for Real Estate Teams
+    </div>
+    <div>
+      © 2026 MEGADRONE Systems. Apache-2.0 Open Operational Standard.
+    </div>
+  </footer>
+</body>
+</html>

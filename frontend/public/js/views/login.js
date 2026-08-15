@@ -5,19 +5,19 @@ import { showToast } from '../components/ui.js';
 export function renderLoginView(container) {
   container.innerHTML = `
     <div style="min-height: 100vh; width: 100vw; display: flex; align-items: center; justify-content: center; background: radial-gradient(circle at top, #1E293B 0%, #0B0F19 100%); padding: 20px;">
-      <div class="card" style="max-width: 440px; width: 100%; padding: 36px; box-shadow: var(--shadow-lg);">
+      <div class="card" style="max-width: 460px; width: 100%; padding: 36px; box-shadow: var(--shadow-lg);">
         <div style="text-align: center; margin-bottom: 28px;">
-          <div style="display: inline-flex; width: 50px; height: 50px; background: linear-gradient(135deg, #3B82F6, #1E40AF); border-radius: var(--radius-md); align-items: center; justify-content: center; color: #fff; font-size: 1.5rem; margin-bottom: 12px; box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);">
-            <i class="fas fa-shield-halved"></i>
+          <div style="display: inline-flex; width: 52px; height: 52px; background: linear-gradient(135deg, #3B82F6, #1E40AF); border-radius: var(--radius-md); align-items: center; justify-content: center; color: #fff; font-size: 1.5rem; margin-bottom: 12px; box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);">
+            <i class="fas fa-building-circle-check"></i>
           </div>
-          <h1 style="font-size: 1.4rem; font-weight: 800; color: #fff; letter-spacing: -0.02em;">MEGADRONE Business OS</h1>
-          <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 4px;">Enterprise AI Operations & Task Governance</p>
+          <h1 style="font-size: 1.45rem; font-weight: 800; color: #fff; letter-spacing: -0.02em;">MEGADRONE Business OS</h1>
+          <p style="font-size: 0.85rem; color: #94A3B8; margin-top: 4px;">AI Operations & Follow-up Governance for Real Estate Teams</p>
         </div>
 
         <form id="login-form">
           <div class="form-group">
-            <label class="form-label">Work Email</label>
-            <input type="email" id="login-email" class="form-control" placeholder="name@company.com" required value="alex.mercer@apexglobal.io">
+            <label class="form-label">Agency Work Email</label>
+            <input type="email" id="login-email" class="form-control" placeholder="broker@agency.com" required value="rohit.sharma@apexrealty.demo">
           </div>
 
           <div class="form-group" style="margin-bottom: 24px;">
@@ -26,24 +26,29 @@ export function renderLoginView(container) {
           </div>
 
           <button type="submit" id="btn-submit-login" class="btn btn-primary" style="width: 100%; padding: 12px; font-size: 0.95rem;">
-            <i class="fas fa-arrow-right-to-bracket"></i> Sign In to Operations
+            <i class="fas fa-arrow-right-to-bracket"></i> Sign In to Operations Console
           </button>
         </form>
 
-        <div style="margin-top: 28px; padding-top: 20px; border-top: 1px solid var(--border-subtle);">
-          <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; text-align: center; margin-bottom: 12px; letter-spacing: 0.05em;">
-            Quick Demo Access (Apex Global Dynamics)
+        <div style="margin-top: 26px; padding-top: 20px; border-top: 1px solid var(--border-subtle);">
+          <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; text-align: center; margin-bottom: 10px; letter-spacing: 0.05em;">
+            1-Click Demo Login (Apex Realty Advisors)
           </div>
           <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;">
-            <button type="button" class="btn btn-secondary btn-sm demo-login-btn" data-email="alex.mercer@apexglobal.io">
-              Owner
+            <button type="button" class="btn btn-secondary btn-sm demo-login-btn" data-email="rohit.sharma@apexrealty.demo">
+              Principal Broker
             </button>
-            <button type="button" class="btn btn-secondary btn-sm demo-login-btn" data-email="sarah.jenkins@apexglobal.io">
-              Manager
+            <button type="button" class="btn btn-secondary btn-sm demo-login-btn" data-email="anjali.mehta@apexrealty.demo">
+              Sales Manager
             </button>
-            <button type="button" class="btn btn-secondary btn-sm demo-login-btn" data-email="rahul.sharma@apexglobal.io">
-              Employee
+            <button type="button" class="btn btn-secondary btn-sm demo-login-btn" data-email="vikram.singh@apexrealty.demo">
+              Senior Agent
             </button>
+          </div>
+          <div style="text-align: center; margin-top: 18px;">
+            <a href="/landing.html" style="font-size: 0.8rem; color: var(--accent-info); text-decoration: underline;">
+              <i class="fas fa-globe"></i> View Public Product Landing Page
+            </a>
           </div>
         </div>
       </div>
@@ -68,7 +73,7 @@ export function renderLoginView(container) {
     } catch (err) {
       showToast(err.message || 'Login failed', 'error');
       submitBtn.disabled = false;
-      submitBtn.innerHTML = '<i class="fas fa-arrow-right-to-bracket"></i> Sign In to Operations';
+      submitBtn.innerHTML = '<i class="fas fa-arrow-right-to-bracket"></i> Sign In to Operations Console';
     }
   });
 

@@ -23,6 +23,17 @@ const CreateLeadSchema = z.object({
   assignedTo: z.string().optional().nullable(),
   aiClassification: z.string().optional().nullable(),
   aiSuggestedAction: z.string().optional().nullable(),
+  // Real Estate Optional Fields
+  propertyType: z.string().optional().nullable(),
+  budgetMin: z.number().optional().nullable(),
+  budgetMax: z.number().optional().nullable(),
+  preferredLocation: z.string().optional().nullable(),
+  bedrooms: z.number().int().optional().nullable(),
+  purpose: z.string().optional().nullable(),
+  buyOrRent: z.string().optional().nullable(),
+  siteVisitDate: z.string().optional().nullable(),
+  leadSource: z.string().optional().nullable(),
+  preferredContactTime: z.string().optional().nullable(),
 });
 
 const UpdateLeadSchema = CreateLeadSchema.partial();
@@ -30,11 +41,14 @@ const UpdateLeadSchema = CreateLeadSchema.partial();
 // List Leads
 router.get('/', requirePermission(PERMISSIONS.LEAD_READ), (req, res, next) => {
   try {
-    const { status, priority, assignedTo, search, limit, offset } = req.query;
+    const { status, priority, assignedTo, propertyType, preferredLocation, buyOrRent, search, limit, offset } = req.query;
     const leads = leadRepo.listByOrg(req.user.orgId, {
       status,
       priority,
       assignedTo,
+      propertyType,
+      preferredLocation,
+      buyOrRent,
       search,
       limit: limit ? parseInt(limit, 10) : 100,
       offset: offset ? parseInt(offset, 10) : 0,
@@ -50,6 +64,34 @@ router.get('/stats', requirePermission(PERMISSIONS.LEAD_READ), (req, res, next) 
   try {
     const stats = leadRepo.getStats(req.user.orgId);
     res.json({ success: true, data: stats });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Follow-ups Needing Attention (Real Estate Prioritization)
+router.get('/attention', requirePermission(PERMISSIONS.LEAD_READ), (req, res, next) => {
+  try {
+    const limit = req.query.limit ? parseInt(req.query.limit, 10) : 20;
+    const leads = leadRepo.getFollowupsNeedingAttention(req.user.orgId, limit);
+    res.json({ success: true, data: leads });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Site Visits Scheduled
+router.get('/site-visits', requirePermission(PERMISSIONS.LEAD_READ), (req, res, next) => {
+  try {
+    const todayVisits = leadRepo.getSiteVisitsToday(req.user.orgId);
+    const upcomingVisits = leadRepo.getUpcomingSiteVisits(req.user.orgId, 7);
+    res.json({
+      success: true,
+      data: {
+        today: todayVisits,
+        upcoming: upcomingVisits,
+      }
+    });
   } catch (err) {
     next(err);
   }
@@ -92,7 +134,12 @@ router.post('/', requirePermission(PERMISSIONS.LEAD_CREATE), (req, res, next) =>
       action: 'LEAD_CREATED',
       resourceType: 'LEAD',
       resourceId: lead.id,
-      details: { name: lead.name, company: lead.company, status: lead.status },
+      details: {
+        name: lead.name,
+        propertyType: lead.property_type,
+        location: lead.preferred_location,
+        status: lead.status,
+      },
       ipAddress: req.ip,
     });
 
