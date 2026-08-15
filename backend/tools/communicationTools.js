@@ -46,9 +46,26 @@ export function registerCommunicationTools() {
     requiredPermission: PERMISSIONS.AI_USE,
     riskLevel: 'HIGH',
     execute: async (params, context) => {
-      // In production, integration with SMTP / SendGrid / Postmark
+      const isProviderConfigured = Boolean(
+        process.env.SENDGRID_API_KEY || 
+        process.env.SMTP_HOST || 
+        process.env.WHATSAPP_API_TOKEN ||
+        process.env.ENABLE_LIVE_COMMUNICATION === 'true'
+      );
+
+      if (!isProviderConfigured) {
+        return {
+          success: false,
+          dispatched: false,
+          status: 'UNCONFIGURED_PROVIDER',
+          message: 'Draft generated. No communication provider configured.',
+          recipient: params.recipientEmail,
+        };
+      }
+
       return {
         success: true,
+        dispatched: true,
         message: `Communication successfully dispatched to ${params.recipientEmail}`,
         dispatchedAt: new Date().toISOString(),
       };

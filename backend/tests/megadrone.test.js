@@ -20,6 +20,10 @@ import { workflowEngine } from '../workflows/engine.js';
 import { orchestrator } from '../core/orchestrator.js';
 import { businessBriefEngine } from '../agents/businessBriefEngine.js';
 import { leadAgent } from '../agents/leadAgent.js';
+import { initializeTools } from '../tools/systemTools.js';
+
+// Initialize tools
+initializeTools();
 
 // Setup Test Tenant
 let testOrg1;
@@ -407,4 +411,145 @@ test('20. Business Impact Telemetry (No Fabricated Numbers)', () => {
   const emptyImpact = businessBriefEngine.calculateBusinessImpact(emptyOrg.id);
   assert.equal(emptyImpact.hasData, false);
   assert.equal(emptyImpact.message, 'Insufficient data.');
+});
+
+test('21. AI Lead Qualifier Multi-Language & Edge Case Scenarios (Cases A to F)', async () => {
+  // Case A: 3BHK Jaipur under 80 lakh
+  const caseA = await leadAgent.qualifyAndExtractRequirements('Need 3BHK in Jaipur under 80 lakh.', { orgId: testOrg1.id });
+  assert.ok(caseA.requirement.includes('3BHK'));
+  assert.equal(caseA.location, 'Jaipur');
+  assert.ok(caseA.budget.includes('80'));
+  assert.equal(caseA.priority, 'HIGH');
+
+  // Case B: Generic "Looking for a property."
+  const caseB = await leadAgent.qualifyAndExtractRequirements('Looking for a property.', { orgId: testOrg1.id });
+  assert.ok(caseB.requirement.includes('Property'));
+  assert.equal(caseB.budget, 'Not provided.');
+  assert.equal(caseB.location, 'Not provided.');
+  assert.ok(caseB.missingInfo.includes('Budget range'));
+  assert.ok(caseB.missingInfo.includes('Preferred locality'));
+
+  // Case C: Villa Gurgaon 2 crore Saturday visit
+  const caseC = await leadAgent.qualifyAndExtractRequirements('I want a villa in Gurgaon around 2 crore and want to visit Saturday.', { orgId: testOrg1.id });
+  assert.ok(caseC.requirement.toLowerCase().includes('villa'));
+  assert.equal(caseC.location, 'Gurugram');
+  assert.ok(caseC.budget.includes('2'));
+  assert.equal(caseC.siteVisitIntent, 'Saturday');
+  assert.equal(caseC.priority, 'HIGH');
+
+  // Case D: Devanagari Hindi
+  const caseD = await leadAgent.qualifyAndExtractRequirements('मुझे जयपुर में 3 बीएचके फ्लैट चाहिए, बजट 80 लाख', { orgId: testOrg1.id });
+  assert.ok(caseD.requirement.includes('3BHK'));
+  assert.equal(caseD.location, 'Jaipur');
+  assert.ok(caseD.budget.includes('80'));
+  assert.equal(caseD.priority, 'HIGH');
+
+  // Case E: Hinglish
+  const caseE = await leadAgent.qualifyAndExtractRequirements('Jaipur me 3bhk chahiye budget 80 lakh weekend me visit karna hai', { orgId: testOrg1.id });
+  assert.ok(caseE.requirement.includes('3BHK'));
+  assert.equal(caseE.location, 'Jaipur');
+  assert.equal(caseE.siteVisitIntent, 'This weekend');
+  assert.equal(caseE.priority, 'HIGH');
+
+  // Case F: Completely unrelated text
+  const caseF = await leadAgent.qualifyAndExtractRequirements('What is the recipe for chocolate cake?', { orgId: testOrg1.id });
+  assert.equal(caseF.priority, 'LOW');
+  assert.equal(caseF.requirement, 'Not provided.');
+  assert.equal(caseF.budget, 'Not provided.');
+  assert.ok(caseF.summary.includes('does not contain identifiable'));
+});
+
+test('22. High-Risk Communication Tool Safety (No Fake Send when Unconfigured)', async () => {
+  const { toolRegistry } = await import('../tools/toolRegistry.js');
+  const result = await toolRegistry.execute('send_external_communication', {
+    recipientEmail: 'client@example.com',
+    subject: 'Property follow-up',
+    body: 'Hello, checking in.',
+  }, { orgId: testOrg1.id, user: ownerUser });
+
+  assert.equal(result.dispatched, false);
+  assert.equal(result.message, 'Draft generated. No communication provider configured.');
+});
+
+test('23. Complete Real Estate CRM Lifecycle', () => {
+  // 1. Create Lead
+  const lead = leadRepo.create({
+    orgId: testOrg1.id,
+    name: 'Ananya Sharma',
+    phone: '+91 98290 99887',
+    propertyType: '3BHK Flat',
+    preferredLocation: 'Jaipur',
+    budgetMax: 90,
+    status: 'NEW',
+    priority: 'HIGH',
+  });
+  assert.ok(lead.id);
+
+  // 2. View Lead
+  const viewed = leadRepo.findById(lead.id, testOrg1.id);
+  assert.equal(viewed.name, 'Ananya Sharma');
+
+  // 3. Edit & Update Lead Status
+  const qualified = leadRepo.update(lead.id, testOrg1.id, {
+    status: 'QUALIFIED',
+    siteVisitDate: '2026-08-25',
+    nextFollowup: '2026-08-24',
+  });
+  assert.equal(qualified.status, 'QUALIFIED');
+  assert.equal(qualified.site_visit_date, '2026-08-25');
+
+  // 4. Advance to Won
+  const won = leadRepo.update(lead.id, testOrg1.id, {
+    status: 'WON',
+  });
+  assert.equal(won.status, 'WON');
+
+  // 5. Delete Lead
+  leadRepo.delete(lead.id, testOrg1.id);
+  const deleted = leadRepo.findById(lead.id, testOrg1.id);
+  assert.equal(deleted, null);
+});
+
+test('24. CRM Edge Cases & Boundary Handling', () => {
+  // Special characters & large values
+  const edgeLead = leadRepo.create({
+    orgId: testOrg1.id,
+    name: "O'Connor & Sons <script>alert(1)</script> / 🏢",
+    company: 'Test & Co.',
+    budgetMin: 0.001,
+    budgetMax: 9999999.99,
+    preferredLocation: 'City / Sector 12 # @ !',
+    notes: 'Very large notes content '.repeat(50),
+    status: 'NEW',
+    priority: 'LOW',
+  });
+
+  assert.ok(edgeLead.id);
+  assert.equal(edgeLead.budget_max, 9999999.99);
+
+  // Cleanup
+  leadRepo.delete(edgeLead.id, testOrg1.id);
+});
+
+test('25. Human Approval Rejection & Workflow State Synchronization', () => {
+  const approval = approvalRepo.create({
+    orgId: testOrg1.id,
+    actionType: 'SEND_EXTERNAL_COMMUNICATION',
+    riskLevel: 'HIGH',
+    payload: { recipient: 'prospect@test.com' },
+    reason: 'Price discount outreach requires approval',
+    requestedBy: employeeUser.id,
+  });
+
+  assert.equal(approval.status, 'PENDING');
+
+  // Reject approval
+  const rejected = approvalRepo.resolve(approval.id, testOrg1.id, {
+    status: 'REJECTED',
+    approvedBy: ownerUser.id,
+    rejectionReason: 'Discount percentage too high',
+  });
+
+  assert.equal(rejected.status, 'REJECTED');
+  assert.equal(rejected.rejection_reason, 'Discount percentage too high');
 });
