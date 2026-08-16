@@ -74,10 +74,25 @@ export async function renderApprovalsView(container) {
               </div>
               <div style="font-size: 0.9rem; color: #fff;">${escapeHtml(appr.reason)}</div>
 
-              <div style="margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--border-subtle);">
-                <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">Payload Parameters</div>
-                <pre style="background: var(--bg-main); padding: 8px 12px; border-radius: 4px; font-family: var(--font-mono); font-size: 0.75rem; color: #A7F3D0; overflow-x: auto; max-height: 120px;">${escapeHtml(JSON.stringify(appr.payload, null, 2))}</pre>
-              </div>
+              ${appr.action_type === 'COMMUNICATION_DRAFT' && appr.payload.draft_message ? `
+                <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border-subtle);">
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                    <span style="font-size: 0.75rem; color: #60A5FA; font-weight: 700; text-transform: uppercase;">
+                      <i class="fab fa-whatsapp"></i> WhatsApp Follow-up Message Draft (${escapeHtml(appr.payload.language || 'English')})
+                    </span>
+                    <span style="font-size: 0.75rem; color: var(--text-muted);">Lead: <strong>${escapeHtml(appr.payload.customer_name || 'Customer')}</strong></span>
+                  </div>
+                  <div style="background: var(--bg-main); padding: 12px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); color: #fff; font-size: 0.88rem; line-height: 1.5; white-space: pre-wrap;">${escapeHtml(appr.payload.draft_message)}</div>
+                  <div style="font-size: 0.75rem; color: #FDE68A; margin-top: 6px; display: flex; align-items: center; gap: 6px;">
+                    <i class="fas fa-shield-halved" style="color: #FBBF24;"></i> Draft generated. Human approval required before sending.
+                  </div>
+                </div>
+              ` : `
+                <div style="margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--border-subtle);">
+                  <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">Payload Parameters</div>
+                  <pre style="background: var(--bg-main); padding: 8px 12px; border-radius: 4px; font-family: var(--font-mono); font-size: 0.75rem; color: #A7F3D0; overflow-x: auto; max-height: 120px;">${escapeHtml(JSON.stringify(appr.payload, null, 2))}</pre>
+                </div>
+              `}
             </div>
 
             ${isPending ? `

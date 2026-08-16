@@ -21,6 +21,7 @@ import activityRoutes from './routes/activities.js';
 import aiRoutes from './routes/ai.js';
 import dashboardRoutes from './routes/dashboard.js';
 import settingsRoutes from './routes/settings.js';
+import followupRoutes from './routes/followups.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -72,6 +73,7 @@ export function createApp() {
   app.use('/api/ai', aiRoutes);
   app.use('/api/dashboard', dashboardRoutes);
   app.use('/api/settings', settingsRoutes);
+  app.use('/api/followups', followupRoutes);
 
   // Serve Frontend static assets if available
   app.use(express.static(frontendDist));

@@ -45,7 +45,51 @@ Return JSON format:
     });
 
     if (result.success && result.data) {
-      return result.data;
+      const data = result.data;
+      const fallback = this.fallbackQualificationExtractor(inputText);
+      
+      // If LLM returned generic/unqualified priority for a clear qualified buyer with requirement & budget or visit
+      if (fallback.priority === 'HIGH' || fallback.priority === 'URGENT') {
+        data.priority = fallback.priority;
+      } else if (fallback.priority === 'LOW') {
+        data.priority = 'LOW';
+        data.requirement = 'Not provided.';
+        data.budget = 'Not provided.';
+        data.location = 'Not provided.';
+        data.summary = fallback.summary;
+      }
+      
+      // Ensure requirement has standardized BHK or Property label if found in fallback
+      if (fallback.requirement !== 'Not provided.' && (data.requirement === 'Not provided.' || !data.requirement || data.requirement.toLowerCase().includes('property') || data.requirement.toLowerCase().includes('looking') || (fallback.requirement.includes('BHK') && !data.requirement.includes('BHK')))) {
+        data.requirement = fallback.requirement;
+      }
+      
+      if (fallback.location !== 'Not provided.' && (data.location === 'Not provided.' || !data.location || data.location.toLowerCase().includes('gurgaon') || fallback.location === 'Gurugram' || fallback.location === 'Jaipur')) {
+        data.location = fallback.location;
+      }
+
+      if (fallback.budget !== 'Not provided.' && (data.budget === 'Not provided.' || !data.budget)) {
+        data.budget = fallback.budget;
+      }
+
+      if (fallback.siteVisitIntent !== 'Not provided.' && (data.siteVisitIntent === 'Not provided.' || !data.siteVisitIntent || data.siteVisitIntent.toLowerCase().includes('weekend') || data.siteVisitIntent.toLowerCase().includes('saturday') || data.siteVisitIntent.toLowerCase().includes('sunday'))) {
+        data.siteVisitIntent = fallback.siteVisitIntent;
+      }
+
+      if (fallback.missingInfo && Array.isArray(fallback.missingInfo) && fallback.missingInfo.length > 0) {
+        if (!data.missingInfo || !Array.isArray(data.missingInfo) || data.missingInfo.length <= 1) {
+          data.missingInfo = fallback.missingInfo;
+        } else {
+          // Merge missing info
+          for (const item of fallback.missingInfo) {
+            if (!data.missingInfo.includes(item)) {
+              data.missingInfo.push(item);
+            }
+          }
+        }
+      }
+
+      return data;
     }
 
     // Heuristic deterministic extractor fallback

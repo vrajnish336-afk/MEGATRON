@@ -49,7 +49,11 @@ router.post('/:id/approve', requirePermission(PERMISSIONS.APPROVAL_ACTION), asyn
 
     // Execute the approved underlying action if tool mapped
     let executionResult = { executed: true, message: 'Action approved and executed.' };
-    if (approval.action_type === 'SEND_EXTERNAL_COMMUNICATION' || approval.action_type === 'SEND_EXTERNAL_MESSAGE') {
+    if (
+      approval.action_type === 'SEND_EXTERNAL_COMMUNICATION' || 
+      approval.action_type === 'SEND_EXTERNAL_MESSAGE' ||
+      approval.action_type === 'COMMUNICATION_DRAFT'
+    ) {
       executionResult = await toolRegistry.execute('send_external_communication', approval.payload, {
         orgId: req.user.orgId,
         user: req.user,

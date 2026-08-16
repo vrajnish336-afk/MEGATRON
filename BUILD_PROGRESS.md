@@ -67,6 +67,7 @@
   - Real Estate Executive Dashboard, CRM Pipeline, and Impact Telemetry (`frontend/public/`)
   - Dedicated Public Landing Page (`frontend/public/landing.html`)
   - Automated Real Estate Test Suite (20 / 20 tests passing)
+
 - [x] **Phase 3: AI Follow-up Draft Generator with Human Approval Workflow**
   - **Follow-up Draft Generator Agent** (`backend/agents/followupAgent.js`): Intelligent agent generating WhatsApp & email style follow-up drafts from lead context, stage, last activity, and follow-up reason.
   - **Multi-Language AI Engine**: Full native support for English, Hindi (Devanagari script), and Hinglish (Roman conversational Hindi).

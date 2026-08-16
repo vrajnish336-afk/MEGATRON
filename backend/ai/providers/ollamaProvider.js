@@ -92,7 +92,17 @@ export class OllamaProvider extends BaseAIProvider {
     });
 
     try {
-      const clean = result.content.replace(/^```json\s*/i, '').replace(/\s*```$/i, '').trim();
+      let clean = result.content.trim();
+      const codeBlockMatch = clean.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
+      if (codeBlockMatch) {
+        clean = codeBlockMatch[1].trim();
+      } else {
+        const start = clean.indexOf('{');
+        const end = clean.lastIndexOf('}');
+        if (start !== -1 && end !== -1 && end > start) {
+          clean = clean.substring(start, end + 1);
+        }
+      }
       const parsed = JSON.parse(clean);
       return {
         data: parsed,

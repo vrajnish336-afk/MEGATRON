@@ -113,7 +113,100 @@ export async function renderDashboardView(container) {
           </div>
         </div>
 
-        <!-- Section 3: Business Impact Telemetry (No Fabricated Numbers) -->
+        <!-- Section 3: AI Follow-up Assistant with Human-in-the-loop Approval -->
+        <div class="card" style="margin-bottom: 24px; border-top: 3px solid var(--accent-ai);" id="ai-followup-assistant-section">
+          <div class="card-header" style="margin-bottom: 16px;">
+            <div>
+              <h2 class="card-title" style="font-size: 1.1rem; color: #fff; text-transform: uppercase; letter-spacing: 0.05em;">
+                <i class="fas fa-feather-pointed" style="color: var(--accent-ai);"></i> AI Follow-up Assistant
+              </h2>
+              <p class="card-subtitle">Generate high-converting personalized customer follow-up message drafts with human approval governance</p>
+            </div>
+            <span class="badge" style="background: rgba(168, 85, 247, 0.15); color: #C4B5FD; border: 1px solid rgba(168, 85, 247, 0.3);">
+              <i class="fas fa-shield-halved" style="margin-right: 4px;"></i> Human Approval Required
+            </span>
+          </div>
+
+          <div class="grid-3" style="gap: 16px; margin-bottom: 16px;">
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label" style="font-weight: 600; color: var(--text-secondary);">Select Lead / Customer *</label>
+              <select id="followup-lead-select" class="form-control">
+                <option value="">-- Select a customer lead --</option>
+              </select>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label" style="font-weight: 600; color: var(--text-secondary);">Follow-up Reason *</label>
+              <select id="followup-reason-select" class="form-control">
+                <option value="No response">No response</option>
+                <option value="Site visit reminder">Site visit reminder</option>
+                <option value="Document request">Document request</option>
+                <option value="Negotiation follow-up">Negotiation follow-up</option>
+                <option value="General update">General update</option>
+              </select>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label" style="font-weight: 600; color: var(--text-secondary);">Language / Tone</label>
+              <select id="followup-lang-select" class="form-control">
+                <option value="English">English (Professional WhatsApp)</option>
+                <option value="Hindi">Hindi - हिन्दी (Devanagari)</option>
+                <option value="Hinglish">Hinglish (Roman Conversational)</option>
+              </select>
+            </div>
+          </div>
+
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px;">
+            <div style="font-size: 0.8rem; color: var(--text-muted);">
+              <i class="fas fa-robot" style="color: var(--accent-primary);"></i> AI Provider: Local Ollama (fallback to Cloud) • Zero external data leaks
+            </div>
+            <button id="btn-generate-followup-draft" class="btn btn-ai">
+              <i class="fas fa-wand-magic-sparkles"></i> Generate Draft
+            </button>
+          </div>
+
+          <!-- Generated Draft Output Area -->
+          <div id="followup-draft-output-area" style="display: none; background: var(--bg-surface); padding: 18px; border-radius: var(--radius-md); border: 1px solid var(--border-subtle); margin-top: 12px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span class="badge" style="background: rgba(59, 130, 246, 0.2); color: #60A5FA; font-weight: 700;">
+                  <i class="fab fa-whatsapp"></i> WhatsApp Style Message
+                </span>
+                <span id="draft-lang-badge" class="badge badge-contacted">English</span>
+                <span id="draft-status-badge" class="badge" style="background: rgba(245, 158, 11, 0.2); color: #FBBF24;">PENDING_APPROVAL</span>
+              </div>
+              <span id="draft-id-display" style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-muted);"></span>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 12px;">
+              <label class="form-label" style="color: var(--text-secondary); font-size: 0.82rem; font-weight: 600;">AI Generated Message:</label>
+              <textarea id="draft-message-display" class="form-control" style="min-height: 140px; line-height: 1.5; font-family: var(--font-sans); background: var(--bg-main); color: #fff;" readonly></textarea>
+            </div>
+
+            <!-- Mandatory Safety Rule Notice -->
+            <div style="background: rgba(245, 158, 11, 0.12); border-left: 4px solid #F59E0B; padding: 10px 14px; border-radius: var(--radius-sm); margin-bottom: 16px; display: flex; align-items: center; gap: 10px;">
+              <i class="fas fa-shield-halved" style="color: #FBBF24; font-size: 1.2rem;"></i>
+              <span style="font-size: 0.85rem; color: #FDE68A; font-weight: 600;">
+                Draft generated. Human approval required before sending.
+              </span>
+            </div>
+
+            <!-- Action buttons: Approve, Reject, Edit -->
+            <div style="display: flex; justify-content: flex-end; gap: 10px; flex-wrap: wrap;" id="draft-actions-bar">
+              <button id="btn-draft-edit" class="btn btn-secondary btn-sm">
+                <i class="fas fa-pen-to-square"></i> Edit
+              </button>
+              <button id="btn-draft-reject" class="btn btn-danger btn-sm">
+                <i class="fas fa-times"></i> Reject
+              </button>
+              <button id="btn-draft-approve" class="btn btn-success btn-sm">
+                <i class="fas fa-check"></i> Approve
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 4: Business Impact Telemetry (No Fabricated Numbers) -->
         <div class="card" style="margin-bottom: 24px;">
           <div class="card-header">
             <div>
@@ -134,14 +227,18 @@ export async function renderDashboardView(container) {
   const contentEl = container.querySelector('#dashboard-content');
   const refreshBriefBtn = container.querySelector('#btn-refresh-brief');
 
+  let allOrgLeads = [];
+  let activeFollowupDraft = null;
+
   async function loadDashboardData() {
     try {
-      const [briefRes, attentionRes, siteVisitsRes, tasksRes, impactRes] = await Promise.all([
+      const [briefRes, attentionRes, siteVisitsRes, tasksRes, impactRes, leadsRes] = await Promise.all([
         APIClient.getDailyBrief(),
         APIClient.getFollowupsNeedingAttention(5),
         APIClient.getSiteVisits(),
         APIClient.getTaskSchedule(),
         APIClient.getBusinessImpact(),
+        APIClient.getLeads({ limit: 100 }),
       ]);
 
       const brief = briefRes.data;
@@ -151,6 +248,17 @@ export async function renderDashboardView(container) {
       const todayTasks = tasksRes.data?.today || [];
       const overdueTasks = tasksRes.data?.overdue || [];
       const impact = impactRes.data;
+      allOrgLeads = leadsRes.data || [];
+
+      // Populate AI Follow-up Assistant Lead Selector
+      const leadSelect = container.querySelector('#followup-lead-select');
+      if (leadSelect) {
+        leadSelect.innerHTML = `<option value="">-- Select a customer lead (${allOrgLeads.length} available) --</option>` +
+          allOrgLeads.map(l => {
+            const req = l.property_type || (l.bedrooms ? `${l.bedrooms}BHK` : '') || l.company || 'Inquiry';
+            return `<option value="${l.id}">${escapeHtml(l.name)} (${escapeHtml(req)} • ${escapeHtml(l.status)})</option>`;
+          }).join('');
+      }
 
       // 1. Render Urgent Alert Banner
       const alertsContainer = container.querySelector('#urgent-alerts-container');
@@ -414,6 +522,192 @@ export async function renderDashboardView(container) {
       showToast(err.message || 'Failed generating draft', 'error');
     });
   }
+
+    // AI Follow-up Assistant Event Handlers
+    const generateBtn = container.querySelector('#btn-generate-followup-draft');
+    const leadSelect = container.querySelector('#followup-lead-select');
+    const reasonSelect = container.querySelector('#followup-reason-select');
+    const langSelect = container.querySelector('#followup-lang-select');
+    const draftOutputArea = container.querySelector('#followup-draft-output-area');
+    const draftMessageDisplay = container.querySelector('#draft-message-display');
+    const draftIdDisplay = container.querySelector('#draft-id-display');
+    const draftLangBadge = container.querySelector('#draft-lang-badge');
+    const draftStatusBadge = container.querySelector('#draft-status-badge');
+    const btnDraftEdit = container.querySelector('#btn-draft-edit');
+    const btnDraftApprove = container.querySelector('#btn-draft-approve');
+    const btnDraftReject = container.querySelector('#btn-draft-reject');
+
+    let isEditingDraft = false;
+
+    if (generateBtn) {
+      generateBtn.addEventListener('click', async () => {
+        const selectedLeadId = leadSelect.value;
+        const selectedReason = reasonSelect.value;
+        const selectedLang = langSelect.value;
+
+        if (!selectedLeadId) {
+          showToast('Please select a customer lead first', 'warning');
+          leadSelect.focus();
+          return;
+        }
+
+        generateBtn.disabled = true;
+        generateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating Draft...';
+
+        try {
+          const res = await APIClient.generateFollowup({
+            lead_id: selectedLeadId,
+            reason: selectedReason,
+            language: selectedLang,
+          });
+
+          activeFollowupDraft = res.draft || {
+            draft_id: res.draft_id,
+            id: res.draft_id,
+            draft_message: res.message,
+            language: selectedLang,
+            status: res.status || 'PENDING_APPROVAL',
+          };
+          activeFollowupDraft.draft_id = res.draft_id || activeFollowupDraft.id;
+
+          draftIdDisplay.textContent = `Draft ID: ${activeFollowupDraft.draft_id}`;
+          draftMessageDisplay.value = res.message || activeFollowupDraft.draft_message;
+          draftMessageDisplay.readOnly = true;
+          draftLangBadge.textContent = selectedLang;
+          draftStatusBadge.textContent = 'PENDING_APPROVAL';
+          draftStatusBadge.style.background = 'rgba(245, 158, 11, 0.2)';
+          draftStatusBadge.style.color = '#FBBF24';
+
+          btnDraftApprove.disabled = false;
+          btnDraftReject.disabled = false;
+          btnDraftEdit.disabled = false;
+          btnDraftEdit.innerHTML = '<i class="fas fa-pen-to-square"></i> Edit';
+          isEditingDraft = false;
+
+          draftOutputArea.style.display = 'block';
+          draftOutputArea.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          showToast('AI follow-up draft generated. Human approval required before sending.', 'info');
+        } catch (err) {
+          showToast(err.message || 'Failed generating follow-up draft', 'error');
+        } finally {
+          generateBtn.disabled = false;
+          generateBtn.innerHTML = '<i class="fas fa-wand-magic-sparkles"></i> Generate Draft';
+        }
+      });
+    }
+
+    if (btnDraftEdit) {
+      btnDraftEdit.addEventListener('click', async () => {
+        if (!activeFollowupDraft) return;
+
+        if (!isEditingDraft) {
+          // Enable editing mode
+          isEditingDraft = true;
+          draftMessageDisplay.readOnly = false;
+          draftMessageDisplay.style.borderColor = 'var(--accent-primary)';
+          draftMessageDisplay.focus();
+          btnDraftEdit.innerHTML = '<i class="fas fa-floppy-disk"></i> Save Changes';
+          btnDraftEdit.className = 'btn btn-primary btn-sm';
+          showToast('You can now edit the draft message directly.', 'info');
+        } else {
+          // Save edited content
+          const updatedText = draftMessageDisplay.value.trim();
+          if (!updatedText) {
+            showToast('Draft message cannot be empty', 'error');
+            return;
+          }
+
+          btnDraftEdit.disabled = true;
+          btnDraftEdit.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+
+          try {
+            await APIClient.editFollowupDraft(activeFollowupDraft.draft_id, { message: updatedText });
+            activeFollowupDraft.draft_message = updatedText;
+            draftMessageDisplay.readOnly = true;
+            draftMessageDisplay.style.borderColor = 'var(--border-subtle)';
+            isEditingDraft = false;
+            btnDraftEdit.className = 'btn btn-secondary btn-sm';
+            btnDraftEdit.innerHTML = '<i class="fas fa-pen-to-square"></i> Edit';
+            showToast('Draft message updated and saved to approval queue.', 'success');
+          } catch (err) {
+            showToast(err.message || 'Failed to update draft', 'error');
+          } finally {
+            btnDraftEdit.disabled = false;
+          }
+        }
+      });
+    }
+
+    if (btnDraftApprove) {
+      btnDraftApprove.addEventListener('click', async () => {
+        if (!activeFollowupDraft) return;
+
+        btnDraftApprove.disabled = true;
+        btnDraftApprove.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Approving...';
+
+        try {
+          await APIClient.approveFollowupDraft(activeFollowupDraft.draft_id);
+          draftStatusBadge.textContent = 'APPROVED';
+          draftStatusBadge.style.background = 'rgba(16, 185, 129, 0.2)';
+          draftStatusBadge.style.color = '#34D399';
+
+          btnDraftApprove.disabled = true;
+          btnDraftReject.disabled = true;
+          btnDraftEdit.disabled = true;
+          showToast('Draft approved successfully. Human authorization recorded in audit log.', 'success');
+        } catch (err) {
+          showToast(err.message || 'Failed to approve draft', 'error');
+          btnDraftApprove.disabled = false;
+          btnDraftApprove.innerHTML = '<i class="fas fa-check"></i> Approve';
+        }
+      });
+    }
+
+    if (btnDraftReject) {
+      btnDraftReject.addEventListener('click', () => {
+        if (!activeFollowupDraft) return;
+
+        showModal({
+          title: 'Reject Follow-up Draft',
+          bodyHtml: `
+            <div class="form-group">
+              <label class="form-label">Rejection Reason *</label>
+              <textarea id="followup-reject-reason" class="form-control" placeholder="Provide reason for rejecting this communication draft (e.g. Tone too informal, price negotiation pending)..." required></textarea>
+            </div>
+          `,
+          footerButtons: [
+            { label: 'Cancel', className: 'btn-secondary' },
+            {
+              label: 'Confirm Rejection',
+              className: 'btn-danger',
+              onClick: async (modalEl) => {
+                const reason = modalEl.querySelector('#followup-reject-reason').value.trim();
+                if (!reason) {
+                  showToast('Rejection reason is required', 'error');
+                  return false;
+                }
+
+                try {
+                  await APIClient.rejectFollowupDraft(activeFollowupDraft.draft_id, reason);
+                  draftStatusBadge.textContent = 'REJECTED';
+                  draftStatusBadge.style.background = 'rgba(239, 68, 68, 0.2)';
+                  draftStatusBadge.style.color = '#F87171';
+
+                  btnDraftApprove.disabled = true;
+                  btnDraftReject.disabled = true;
+                  btnDraftEdit.disabled = true;
+                  showToast('Follow-up draft rejected.', 'info');
+                  return true;
+                } catch (err) {
+                  showToast(err.message || 'Failed to reject draft', 'error');
+                  return false;
+                }
+              }
+            }
+          ]
+        });
+      });
+    }
 
   refreshBriefBtn.addEventListener('click', async () => {
     refreshBriefBtn.disabled = true;

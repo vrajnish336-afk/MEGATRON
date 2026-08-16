@@ -57,6 +57,19 @@ export const approvalRepo = {
     }));
   },
 
+  updatePayload(id, orgId, payload) {
+    const existing = this.findById(id, orgId);
+    if (!existing) return null;
+
+    const payloadStr = JSON.stringify(sanitizeObject(payload));
+    db.execute(
+      `UPDATE approvals SET payload_json = ? WHERE id = ? AND org_id = ?`,
+      [payloadStr, id, orgId]
+    );
+
+    return this.findById(id, orgId);
+  },
+
   resolve(id, orgId, { status, approvedBy, rejectionReason = null }) {
     const existing = this.findById(id, orgId);
     if (!existing) return null;

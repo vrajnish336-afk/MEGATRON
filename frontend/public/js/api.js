@@ -163,7 +163,7 @@ export class APIClient {
     return this.request(`/workflows/${id}`, { method: 'DELETE' });
   }
 
-  // Approvals
+  // Approvals & Follow-ups
   static getApprovals(params = {}) {
     const query = new URLSearchParams(params).toString();
     return this.request(`/approvals${query ? `?${query}` : ''}`);
@@ -175,6 +175,32 @@ export class APIClient {
 
   static rejectAction(id, reason) {
     return this.request(`/approvals/${id}/reject`, { method: 'POST', body: JSON.stringify({ reason }) });
+  }
+
+  // AI Follow-up Drafts
+  static generateFollowup(data) {
+    return this.request('/followups/generate', { method: 'POST', body: JSON.stringify(data) });
+  }
+
+  static getFollowupDrafts(params = {}) {
+    const query = new URLSearchParams(params).toString();
+    return this.request(`/followups${query ? `?${query}` : ''}`);
+  }
+
+  static getFollowupDraft(id) {
+    return this.request(`/followups/${id}`);
+  }
+
+  static editFollowupDraft(id, data) {
+    return this.request(`/followups/${id}`, { method: 'PATCH', body: JSON.stringify(data) });
+  }
+
+  static approveFollowupDraft(id) {
+    return this.request(`/followups/${id}/approve`, { method: 'POST' });
+  }
+
+  static rejectFollowupDraft(id, reason) {
+    return this.request(`/followups/${id}/reject`, { method: 'POST', body: JSON.stringify({ reason }) });
   }
 
   // Reports

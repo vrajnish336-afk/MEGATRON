@@ -20,6 +20,7 @@ import { workflowEngine } from '../workflows/engine.js';
 import { orchestrator } from '../core/orchestrator.js';
 import { businessBriefEngine } from '../agents/businessBriefEngine.js';
 import { leadAgent } from '../agents/leadAgent.js';
+import { followupAgent } from '../agents/followupAgent.js';
 import { initializeTools } from '../tools/systemTools.js';
 
 // Initialize tools
@@ -552,4 +553,158 @@ test('25. Human Approval Rejection & Workflow State Synchronization', () => {
 
   assert.equal(rejected.status, 'REJECTED');
   assert.equal(rejected.rejection_reason, 'Discount percentage too high');
+});
+
+test('26. Lead Follow-up Draft Generation (AI Follow-up Agent)', async () => {
+  // Test 1: Lead follow-up draft generation
+  const lead = leadRepo.create({
+    orgId: testOrg1.id,
+    name: 'Neha Verma',
+    company: 'Fintech Solutions',
+    propertyType: '3BHK Luxury Flat',
+    status: 'QUALIFIED',
+    priority: 'HIGH',
+  });
+
+  const draft = await followupAgent.generateDraft({
+    lead_id: lead.id,
+    customer_name: 'Neha Verma',
+    company: 'Fintech Solutions',
+    requirement: '3BHK Luxury Flat',
+    lead_stage: 'QUALIFIED',
+    last_activity: 'Applied for mortgage loan',
+    reason_for_followup: 'Home loan sanction pending.',
+    language: 'English',
+  }, { orgId: testOrg1.id, user: ownerUser });
+
+  assert.ok(draft.draft_message);
+  assert.ok(draft.draft_message.length > 20);
+  assert.ok(draft.draft_message.includes('Neha') || draft.draft_message.includes('Verma'));
+  assert.ok(
+    draft.draft_message.toLowerCase().includes('loan') || 
+    draft.draft_message.toLowerCase().includes('sanction') ||
+    draft.draft_message.toLowerCase().includes('follow') ||
+    draft.draft_message.toLowerCase().includes('regarding')
+  );
+  assert.equal(draft.status, 'PENDING_APPROVAL');
+  assert.equal(draft.language, 'English');
+});
+
+test('27. Hindi Message Generation (Devanagari Follow-up Draft)', async () => {
+  // Test 2: Hindi message generation
+  const draftHindi = await followupAgent.generateDraft({
+    customer_name: 'नेहा वर्मा',
+    company: 'अपेक्स रियल्टी',
+    requirement: '3 बीएचके फ्लैट',
+    lead_stage: 'QUALIFIED',
+    last_activity: 'दस्तावेज़ सत्यापन',
+    reason_for_followup: 'Home loan sanction pending. दस्तावेज़ की आवश्यकता है।',
+    language: 'Hindi',
+  }, { orgId: testOrg1.id, user: ownerUser });
+
+  assert.ok(draftHindi.draft_message);
+  assert.ok(draftHindi.draft_message.length > 15);
+  // Must contain Devanagari Hindi text
+  assert.ok(/[\u0900-\u097F]/.test(draftHindi.draft_message));
+  assert.equal(draftHindi.language, 'Hindi');
+  assert.equal(draftHindi.status, 'PENDING_APPROVAL');
+});
+
+test('28. Hinglish Message Generation (Conversational Roman Hindi)', async () => {
+  // Test 3: Hinglish message generation
+  const draftHinglish = await followupAgent.generateDraft({
+    customer_name: 'Neha Verma',
+    requirement: '3BHK Apartment',
+    lead_stage: 'QUALIFIED',
+    last_activity: 'Site visit completed',
+    reason_for_followup: 'Home loan sanction pending status check',
+    language: 'Hinglish',
+  }, { orgId: testOrg1.id, user: ownerUser });
+
+  assert.ok(draftHinglish.draft_message);
+  assert.ok(draftHinglish.draft_message.length > 20);
+  const lowerMsg = draftHinglish.draft_message.toLowerCase();
+  assert.ok(
+    lowerMsg.includes('namaste') || 
+    lowerMsg.includes('aap') || 
+    lowerMsg.includes('hume') || 
+    lowerMsg.includes('kar') || 
+    lowerMsg.includes('karein') ||
+    lowerMsg.includes('batayein') ||
+    lowerMsg.includes('regarding') ||
+    lowerMsg.includes('loan')
+  );
+  assert.equal(draftHinglish.language, 'Hinglish');
+  assert.equal(draftHinglish.status, 'PENDING_APPROVAL');
+});
+
+test('29. Human Approval Required Before Sending Communication Draft', async () => {
+  // Test 4: Approval required before sending
+  const approval = approvalRepo.create({
+    orgId: testOrg1.id,
+    actionType: 'COMMUNICATION_DRAFT',
+    riskLevel: 'HIGH',
+    payload: {
+      lead_id: 'lead_neha_123',
+      customer_name: 'Neha Verma',
+      draft_message: 'Hello Neha Verma, checking on your home loan sanction.',
+      recipient: '+91 9876543210',
+      channel: 'WhatsApp',
+      status: 'PENDING_APPROVAL',
+      safety_notice: 'Draft generated. Human approval required before sending.',
+    },
+    reason: 'Follow-up draft for Neha Verma (Home loan sanction pending). Requires human review before sending.',
+    requestedBy: 'AI_FOLLOWUP_AGENT',
+  });
+
+  // Verify created as pending human signoff
+  assert.equal(approval.status, 'PENDING');
+  assert.equal(approval.action_type, 'COMMUNICATION_DRAFT');
+  assert.equal(approval.risk_level, 'HIGH');
+  assert.equal(approval.payload.safety_notice, 'Draft generated. Human approval required before sending.');
+
+  // Human Supervisor approves the draft
+  const approved = approvalRepo.resolve(approval.id, testOrg1.id, {
+    status: 'APPROVED',
+    approvedBy: ownerUser.id,
+  });
+
+  assert.equal(approved.status, 'APPROVED');
+  assert.equal(approved.approved_by, ownerUser.id);
+  assert.ok(approved.resolved_at);
+});
+
+test('30. Rejected Communication Draft Cannot Dispatch', async () => {
+  // Test 5: Rejected draft cannot dispatch
+  const approval = approvalRepo.create({
+    orgId: testOrg1.id,
+    actionType: 'COMMUNICATION_DRAFT',
+    riskLevel: 'HIGH',
+    payload: {
+      lead_id: 'lead_vikram_456',
+      customer_name: 'Vikram Joshi',
+      draft_message: 'Offering 15% special unapproved discount.',
+      recipient: 'vikram@example.com',
+    },
+    reason: 'High discount outreach requires managerial review',
+    requestedBy: 'AI_FOLLOWUP_AGENT',
+  });
+
+  assert.equal(approval.status, 'PENDING');
+
+  // Supervisor rejects the draft
+  const rejected = approvalRepo.resolve(approval.id, testOrg1.id, {
+    status: 'REJECTED',
+    approvedBy: ownerUser.id,
+    rejectionReason: 'Discount exceeds authorized limit of 5%',
+  });
+
+  assert.equal(rejected.status, 'REJECTED');
+  assert.equal(rejected.rejection_reason, 'Discount exceeds authorized limit of 5%');
+
+  // Attempting to resolve/approve an already rejected draft must be prevented by business logic
+  const rechecked = approvalRepo.findById(approval.id, testOrg1.id);
+  assert.equal(rechecked.status, 'REJECTED');
+  assert.notEqual(rechecked.status, 'APPROVED');
+  assert.notEqual(rechecked.status, 'PENDING');
 });

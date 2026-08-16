@@ -13,6 +13,7 @@ export function getDb() {
     dbInstance.exec('PRAGMA journal_mode = WAL;');
     dbInstance.exec('PRAGMA foreign_keys = ON;');
     dbInstance.exec('PRAGMA synchronous = NORMAL;');
+    dbInstance.exec('PRAGMA busy_timeout = 5000;');
   }
   return dbInstance;
 }
