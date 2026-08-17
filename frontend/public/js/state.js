@@ -5,7 +5,18 @@
 class AppState {
   constructor() {
     this.token = localStorage.getItem('megadrone_token') || null;
-    this.user = JSON.parse(localStorage.getItem('megadrone_user') || 'null');
+    let storedUser = null;
+    try {
+      storedUser = JSON.parse(localStorage.getItem('megadrone_user') || 'null');
+      if (storedUser && (storedUser.name?.includes('Rohit') || storedUser.email?.includes('rohit'))) {
+        storedUser.name = storedUser.name.replace(/Rohit Sharma/g, 'Rajnish Verma').replace(/Rohit/g, 'Rajnish');
+        storedUser.email = storedUser.email.replace(/rohit\.sharma/g, 'rajnish.verma');
+        localStorage.setItem('megadrone_user', JSON.stringify(storedUser));
+      }
+    } catch {
+      storedUser = null;
+    }
+    this.user = storedUser;
     this.org = JSON.parse(localStorage.getItem('megadrone_org') || 'null');
     this.currentRoute = 'dashboard';
     this.listeners = new Set();

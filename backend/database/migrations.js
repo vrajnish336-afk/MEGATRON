@@ -39,6 +39,25 @@ export function runMigrations() {
     // Add index on site_visit_date if not present
     rawDb.exec(`CREATE INDEX IF NOT EXISTS idx_leads_site_visit ON leads(org_id, site_visit_date);`);
 
+    // Safely migrate Principal Broker demo persona in SQLite database
+    rawDb.exec(`
+      UPDATE users 
+      SET name = 'Rajnish Verma (Principal Broker)', email = 'rajnish.verma@apexrealty.demo'
+      WHERE email = 'rohit.sharma@apexrealty.demo' OR name = 'Rohit Sharma (Principal Broker)';
+
+      UPDATE approvals
+      SET requested_by = 'Rajnish Verma (Principal Broker)'
+      WHERE requested_by = 'Rohit Sharma (Principal Broker)';
+
+      UPDATE approvals
+      SET payload_json = REPLACE(REPLACE(payload_json, 'Rohit Sharma', 'Rajnish Verma'), 'rohit.sharma', 'rajnish.verma')
+      WHERE payload_json LIKE '%Rohit%' OR payload_json LIKE '%rohit%';
+
+      UPDATE audit_logs
+      SET details_json = REPLACE(REPLACE(details_json, 'Rohit Sharma', 'Rajnish Verma'), 'rohit.sharma', 'rajnish.verma')
+      WHERE details_json LIKE '%Rohit%' OR details_json LIKE '%rohit%';
+    `);
+
     logger.info('Database schema migrations completed successfully.');
     return true;
   } catch (err) {

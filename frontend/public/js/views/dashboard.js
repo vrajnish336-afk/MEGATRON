@@ -3,7 +3,8 @@ import { state } from '../state.js';
 import { showToast, showModal, formatDate, formatDateTime, escapeHtml } from '../components/ui.js';
 
 export async function renderDashboardView(container) {
-  const userName = state.user?.name ? state.user.name.split(' ')[0] : 'Rajnish';
+  let userName = state.user?.name ? state.user.name.split(' ')[0] : 'Rajnish';
+  if (userName === 'Rohit') userName = 'Rajnish';
 
   container.innerHTML = `
     <div class="page-container">

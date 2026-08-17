@@ -29,11 +29,25 @@ const ROUTES = {
   settings: renderSettingsView,
 };
 
-function initApp() {
+async function initApp() {
   window.addEventListener('hashchange', handleRoute);
   state.subscribe(() => {
     // Re-render layout if authentication state changed
   });
+
+  // If authenticated, refresh profile from server to ensure accurate live state
+  if (state.isAuthenticated()) {
+    APIClient.getMe().then(res => {
+      if (res?.data?.user) {
+        state.setAuth(state.token, res.data.user, res.data.organization || state.org);
+        const nameEl = document.getElementById('sidebar-user-name');
+        if (nameEl) nameEl.textContent = res.data.user.name;
+      }
+    }).catch(() => {
+      // Ignore background refresh errors
+    });
+  }
+
   handleRoute();
 }
 
