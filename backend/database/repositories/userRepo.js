@@ -34,6 +34,10 @@ export const userRepo = {
     );
   },
 
+  listByOrg(orgId) {
+    return this.findByOrg(orgId);
+  },
+
   update(id, { name, role, isActive, passwordHash }) {
     const user = this.findById(id);
     if (!user) return null;

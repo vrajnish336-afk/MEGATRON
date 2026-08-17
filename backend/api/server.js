@@ -23,6 +23,7 @@ import dashboardRoutes from './routes/dashboard.js';
 import settingsRoutes from './routes/settings.js';
 import followupRoutes from './routes/followups.js';
 import salesRoutes from './routes/sales.js';
+import operationsRoutes from './routes/operations.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -76,6 +77,7 @@ export function createApp() {
   app.use('/api/settings', settingsRoutes);
   app.use('/api/followups', followupRoutes);
   app.use('/api/sales', salesRoutes);
+  app.use('/api/operations', operationsRoutes);
 
   // Serve Frontend static assets if available
   app.use(express.static(frontendDist));

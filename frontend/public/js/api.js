@@ -221,6 +221,31 @@ export class APIClient {
     return this.request('/sales/explain', { method: 'POST', body: JSON.stringify({ query, leadId }) });
   }
 
+  // AI Business Operations Manager
+  static getOperationsHealth() {
+    return this.request('/operations/health');
+  }
+
+  static getExecutivePlan() {
+    return this.request('/operations/executive-plan');
+  }
+
+  static getOpportunities() {
+    return this.request('/operations/opportunities');
+  }
+
+  static getOperationsBrief() {
+    return this.request('/operations/brief');
+  }
+
+  static getOperationsAlerts() {
+    return this.request('/operations/alerts');
+  }
+
+  static explainOperations(query = '') {
+    return this.request('/operations/explain', { method: 'POST', body: JSON.stringify({ query }) });
+  }
+
   // Reports
   static getLeadReport() {
     return this.request('/reports/leads');
