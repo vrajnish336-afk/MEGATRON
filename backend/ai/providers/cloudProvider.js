@@ -2,6 +2,7 @@ import { BaseAIProvider } from './baseProvider.js';
 import { config } from '../../core/config.js';
 import { logger } from '../../core/logger.js';
 import { AIProviderError } from '../../core/errors.js';
+import { parseJsonSafely } from '../../utils/jsonParser.js';
 
 export class CloudAIProvider extends BaseAIProvider {
   constructor(options = {}) {
@@ -99,29 +100,19 @@ export class CloudAIProvider extends BaseAIProvider {
       temperature,
     });
 
-    try {
-      let clean = result.content.trim();
-      const codeBlockMatch = clean.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
-      if (codeBlockMatch) {
-        clean = codeBlockMatch[1].trim();
-      } else {
-        const start = clean.indexOf('{');
-        const end = clean.lastIndexOf('}');
-        if (start !== -1 && end !== -1 && end > start) {
-          clean = clean.substring(start, end + 1);
-        }
-      }
-      const parsed = JSON.parse(clean);
-      return {
-        data: parsed,
-        promptTokens: result.promptTokens,
-        completionTokens: result.completionTokens,
-        model: this.model,
-        provider: 'cloud',
-      };
-    } catch (err) {
-      logger.warn('Failed to parse Cloud AI response as JSON', { raw: result.content });
-      throw new AIProviderError(`Structured output parsing failed: ${err.message}`);
+    const parsedResult = parseJsonSafely(result.content);
+
+    if (!parsedResult.success) {
+      logger.warn('Failed to parse Cloud AI response as JSON', { raw: result.content, error: parsedResult.error });
+      throw new AIProviderError(`Structured output parsing failed: ${parsedResult.error}`);
     }
+
+    return {
+      data: parsedResult.data,
+      promptTokens: result.promptTokens,
+      completionTokens: result.completionTokens,
+      model: this.model,
+      provider: 'cloud',
+    };
   }
 }

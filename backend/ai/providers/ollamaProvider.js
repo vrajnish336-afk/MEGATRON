@@ -2,6 +2,7 @@ import { BaseAIProvider } from './baseProvider.js';
 import { config } from '../../core/config.js';
 import { logger } from '../../core/logger.js';
 import { AIProviderError } from '../../core/errors.js';
+import { parseJsonSafely } from '../../utils/jsonParser.js';
 
 export class OllamaProvider extends BaseAIProvider {
   constructor(options = {}) {
@@ -23,7 +24,14 @@ export class OllamaProvider extends BaseAIProvider {
     }
   }
 
-  async generateCompletion({ prompt, systemPrompt = '', temperature = 0.3, maxTokens = 1500, stopSequences = [] }) {
+  async generateCompletion({
+    prompt,
+    systemPrompt = '',
+    temperature = 0.3,
+    maxTokens = 1500,
+    stopSequences = [],
+    format = null,
+  }) {
     const isOnline = await this.isAvailable();
     if (!isOnline) {
       throw new AIProviderError(`Local Ollama service is not reachable at ${this.baseUrl}`);
@@ -35,6 +43,21 @@ export class OllamaProvider extends BaseAIProvider {
     }
     messages.push({ role: 'user', content: prompt });
 
+    const requestBody = {
+      model: this.model,
+      messages,
+      stream: false,
+      options: {
+        temperature,
+        num_predict: maxTokens,
+        stop: stopSequences,
+      },
+    };
+
+    if (format) {
+      requestBody.format = format;
+    }
+
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), this.timeoutMs);
@@ -42,16 +65,7 @@ export class OllamaProvider extends BaseAIProvider {
       const res = await fetch(`${this.baseUrl}/api/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model: this.model,
-          messages,
-          stream: false,
-          options: {
-            temperature,
-            num_predict: maxTokens,
-            stop: stopSequences,
-          }
-        }),
+        body: JSON.stringify(requestBody),
         signal: controller.signal,
       });
 
@@ -83,37 +97,29 @@ export class OllamaProvider extends BaseAIProvider {
     }
   }
 
-  async generateStructured({ prompt, systemPrompt = '', schema = null, temperature = 0.1 }) {
-    const jsonPrompt = `${prompt}\n\nIMPORTANT: Return ONLY a valid JSON object matching the requested schema. No markdown formatting.`;
+  async generateStructured({ prompt, systemPrompt = '', schema = null, temperature = 0.1, maxTokens = 2048 }) {
+    const jsonPrompt = `${prompt}\n\nIMPORTANT: Return ONLY a valid JSON object matching the requested schema.`;
     const result = await this.generateCompletion({
       prompt: jsonPrompt,
       systemPrompt: systemPrompt ? `${systemPrompt} You are a strict JSON output engine.` : 'You are a strict JSON output engine.',
       temperature,
+      maxTokens,
+      format: 'json',
     });
 
-    try {
-      let clean = result.content.trim();
-      const codeBlockMatch = clean.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
-      if (codeBlockMatch) {
-        clean = codeBlockMatch[1].trim();
-      } else {
-        const start = clean.indexOf('{');
-        const end = clean.lastIndexOf('}');
-        if (start !== -1 && end !== -1 && end > start) {
-          clean = clean.substring(start, end + 1);
-        }
-      }
-      const parsed = JSON.parse(clean);
-      return {
-        data: parsed,
-        promptTokens: result.promptTokens,
-        completionTokens: result.completionTokens,
-        model: this.model,
-        provider: 'ollama',
-      };
-    } catch (err) {
-      logger.warn('Failed to parse Ollama response as JSON', { raw: result.content });
-      throw new AIProviderError(`Ollama structured JSON parsing failed: ${err.message}`);
+    const parsedResult = parseJsonSafely(result.content);
+
+    if (!parsedResult.success) {
+      logger.warn('Failed to parse Ollama response as JSON', { raw: result.content, error: parsedResult.error });
+      throw new AIProviderError(`Ollama structured JSON parsing failed: ${parsedResult.error}`);
     }
+
+    return {
+      data: parsedResult.data,
+      promptTokens: result.promptTokens,
+      completionTokens: result.completionTokens,
+      model: this.model,
+      provider: 'ollama',
+    };
   }
 }
