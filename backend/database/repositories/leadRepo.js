@@ -201,7 +201,7 @@ export const leadRepo = {
       `SELECT l.*, u.name as assigned_to_name 
        FROM leads l 
        LEFT JOIN users u ON l.assigned_to = u.id 
-       WHERE l.org_id = ? AND l.site_visit_date >= ? AND l.site_visit_date <= ? 
+       WHERE l.org_id = ? AND l.site_visit_date > ? AND l.site_visit_date <= ? 
        ORDER BY l.site_visit_date ASC`,
       [orgId, today, maxDate]
     );

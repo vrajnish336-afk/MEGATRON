@@ -67,6 +67,10 @@ export class APIClient {
     return this.request(`/leads${query ? `?${query}` : ''}`);
   }
 
+  static getLead(id) {
+    return this.request(`/leads/${id}`);
+  }
+
   static getLeadStats() {
     return this.request('/leads/stats');
   }

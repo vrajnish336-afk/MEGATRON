@@ -53,7 +53,12 @@ async function initApp() {
 
 async function handleRoute() {
   const hash = window.location.hash.slice(2) || 'dashboard';
-  const route = hash.split('?')[0];
+  const parts = hash.split('?');
+  const pathSegments = parts[0].split('/').filter(Boolean);
+  const route = pathSegments[0] || 'dashboard';
+  const subId = pathSegments[1] || null;
+  const searchParams = new URLSearchParams(parts[1] || '');
+  const entityId = subId || searchParams.get('id') || null;
 
   // Auth Guard
   if (!state.isAuthenticated() && route !== 'login') {
@@ -72,11 +77,11 @@ async function handleRoute() {
   if (route === 'login') {
     renderLoginView(appContainer);
   } else {
-    renderMainLayout(route);
+    renderMainLayout(route, { id: entityId, leadId: entityId });
   }
 }
 
-function renderMainLayout(activeRoute) {
+function renderMainLayout(activeRoute, routeContext = {}) {
   // If app container already has the layout, just update active nav and main content
   let mainContent = document.getElementById('main-content-view');
 
@@ -206,7 +211,7 @@ function renderMainLayout(activeRoute) {
 
   // Render view
   const renderFn = ROUTES[activeRoute] || renderDashboardView;
-  renderFn(mainContent);
+  renderFn(mainContent, routeContext);
 }
 
 function formatPageTitle(route) {

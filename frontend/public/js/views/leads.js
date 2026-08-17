@@ -1,7 +1,7 @@
 import { APIClient } from '../api.js';
 import { showToast, showModal, formatDate, escapeHtml } from '../components/ui.js';
 
-export async function renderLeadsView(container) {
+export async function renderLeadsView(container, context = {}) {
   container.innerHTML = `
     <div class="page-container">
       <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;">
@@ -88,9 +88,11 @@ export async function renderLeadsView(container) {
         const hasSiteVisit = Boolean(l.site_visit_date);
 
         return `
-          <tr>
+          <tr class="lead-row" data-id="${l.id}" style="cursor: pointer; transition: background 0.15s ease;">
             <td>
-              <div style="font-weight: 700; color: #fff;">${escapeHtml(l.name)}</div>
+              <div style="font-weight: 700; color: #fff;">
+                <a href="#/leads/${l.id}" class="lead-name-link" data-id="${l.id}" style="color: #fff; text-decoration: none;">${escapeHtml(l.name)}</a>
+              </div>
               <div style="font-size: 0.75rem; color: var(--text-muted);">${escapeHtml(l.phone || l.email || 'Direct contact')}</div>
               ${l.company ? `<div style="font-size: 0.7rem; color: #60A5FA;">${escapeHtml(l.company)}</div>` : ''}
             </td>
@@ -121,8 +123,11 @@ export async function renderLeadsView(container) {
                 ${isOverdue ? '<i class="fas fa-triangle-exclamation"></i> Overdue: ' : 'Follow-up: '}${formatDate(l.next_followup)}
               </div>
             </td>
-            <td style="text-align: right;">
+            <td style="text-align: right;" class="lead-actions-col">
               <div style="display: inline-flex; gap: 6px;">
+                <button class="btn btn-secondary btn-sm btn-view-lead" data-id="${l.id}" data-name="${escapeHtml(l.name)}" title="View Full Lead Details">
+                  <i class="fas fa-eye"></i> View
+                </button>
                 <button class="btn btn-ai btn-sm btn-draft-action" data-id="${l.id}" data-name="${escapeHtml(l.name)}" title="Generate AI Real Estate Draft">
                   <i class="fas fa-feather-pointed"></i> Draft
                 </button>
@@ -135,26 +140,50 @@ export async function renderLeadsView(container) {
         `;
       }).join('');
 
-      tbody.querySelectorAll('.btn-draft-action').forEach(btn => {
-        btn.addEventListener('click', () => openFollowupDraftModal(btn.dataset.id, btn.dataset.name));
-      });
-
-      tbody.querySelectorAll('.btn-delete-lead').forEach(btn => {
-        btn.addEventListener('click', async () => {
-          if (!confirm(`Delete lead "${btn.dataset.name}"?`)) return;
-          try {
-            await APIClient.deleteLead(btn.dataset.id);
-            showToast('Lead deleted', 'success');
-            loadLeads();
-          } catch (err) {
-            showToast(err.message || 'Failed deleting lead', 'error');
-          }
-        });
-      });
     } catch (err) {
       showToast(err.message || 'Failed loading leads', 'error');
     }
   }
+
+  // Row & Button Click Event Delegation on Table Body
+  const tbody = container.querySelector('#leads-table-body');
+  tbody.addEventListener('click', async (e) => {
+    // 1. Delete Lead
+    const deleteBtn = e.target.closest('.btn-delete-lead');
+    if (deleteBtn) {
+      e.stopPropagation();
+      e.preventDefault();
+      if (!confirm(`Delete lead "${deleteBtn.dataset.name}"?`)) return;
+      try {
+        await APIClient.deleteLead(deleteBtn.dataset.id);
+        showToast('Lead deleted', 'success');
+        loadLeads();
+      } catch (err) {
+        showToast(err.message || 'Failed deleting lead', 'error');
+      }
+      return;
+    }
+
+    // 2. Draft Follow-up
+    const draftBtn = e.target.closest('.btn-draft-action');
+    if (draftBtn) {
+      e.stopPropagation();
+      e.preventDefault();
+      openFollowupDraftModal(draftBtn.dataset.id, draftBtn.dataset.name);
+      return;
+    }
+
+    // 3. View Details (via Details Button, Name Link, or Row Click)
+    const viewBtn = e.target.closest('.btn-view-lead');
+    const nameLink = e.target.closest('.lead-name-link');
+    const row = e.target.closest('.lead-row');
+    const leadId = viewBtn?.dataset.id || nameLink?.dataset.id || row?.dataset.id;
+
+    if (leadId) {
+      e.preventDefault();
+      openLeadDetailModal(leadId, () => loadLeads());
+    }
+  });
 
   // Filter Buttons
   container.querySelectorAll('.filter-btn').forEach(btn => {
@@ -175,6 +204,275 @@ export async function renderLeadsView(container) {
       loadLeads();
     }, 300);
   });
+
+  // Lead Detail View / Modal
+  async function openLeadDetailModal(leadId, onUpdateCallback = null) {
+    if (window.location.hash !== `#/leads/${leadId}`) {
+      try {
+        history.replaceState(null, '', `#/leads/${leadId}`);
+      } catch {}
+    }
+
+    const modalInstance = showModal({
+      title: 'Loading Lead Details...',
+      bodyHtml: `
+        <div id="lead-detail-loading" style="text-align: center; padding: 40px;">
+          <div class="loader-spinner" style="margin: 0 auto 12px auto;"></div>
+          <span style="font-size: 0.9rem; color: var(--text-muted);">Fetching verified property lead records...</span>
+        </div>
+        <div id="lead-detail-content" style="display: none;"></div>
+      `,
+      footerButtons: [
+        { label: 'Close', className: 'btn-secondary' }
+      ],
+      onClose: () => {
+        if (window.location.hash.startsWith('#/leads/')) {
+          try {
+            history.replaceState(null, '', '#/leads');
+          } catch {}
+        }
+      }
+    });
+
+    try {
+      const res = await APIClient.getLead(leadId);
+      const lead = res.data;
+
+      const overlay = modalInstance.element || document.querySelector('.modal-overlay');
+      if (!overlay) return;
+
+      const titleEl = overlay.querySelector('.modal-title');
+      if (titleEl) titleEl.textContent = `Lead Profile: ${lead.name}`;
+
+      const loadingEl = overlay.querySelector('#lead-detail-loading');
+      const contentEl = overlay.querySelector('#lead-detail-content');
+      const footerEl = overlay.querySelector('.modal-footer');
+
+      if (loadingEl) loadingEl.style.display = 'none';
+      if (contentEl) {
+        contentEl.style.display = 'block';
+
+        const reqStr = lead.property_type || (lead.bedrooms ? `${lead.bedrooms}BHK Flat` : 'Property Inquiry');
+        const budgetStr = lead.budget_max ? (lead.budget_min ? `₹${lead.budget_min} - ${lead.budget_max} Lakhs` : `Up to ₹${lead.budget_max} Lakhs`) : 'Budget open';
+        const isOverdue = lead.next_followup && lead.next_followup < new Date().toISOString().slice(0, 10) && !['WON', 'LOST'].includes(lead.status);
+
+        contentEl.innerHTML = `
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 18px; padding-bottom: 14px; border-bottom: 1px solid var(--border-subtle);">
+            <div>
+              <h2 style="font-size: 1.25rem; font-weight: 800; color: #fff; margin: 0;">${escapeHtml(lead.name)}</h2>
+              ${lead.company ? `<div style="font-size: 0.85rem; color: #60A5FA; font-weight: 600; margin-top: 2px;">${escapeHtml(lead.company)}</div>` : ''}
+              <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">Lead ID: <code>${lead.id}</code></div>
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <span class="badge badge-${lead.status.toLowerCase()}">${lead.status}</span>
+              <span class="badge priority-${lead.priority.toLowerCase()}">${lead.priority}</span>
+            </div>
+          </div>
+
+          <!-- Specifications Grid -->
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin-bottom: 18px;">
+            <div style="background: var(--bg-surface); padding: 12px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);">
+              <div style="font-size: 0.72rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">Property Specification</div>
+              <div style="font-size: 0.92rem; font-weight: 700; color: #fff; margin-top: 3px;">
+                <i class="fas fa-home" style="color: var(--accent-primary); margin-right: 4px;"></i> ${escapeHtml(reqStr)}
+              </div>
+              <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 2px;">
+                ${escapeHtml(lead.purpose || 'Self-use')} • ${escapeHtml(lead.buy_or_rent || 'Buy')}
+              </div>
+            </div>
+
+            <div style="background: var(--bg-surface); padding: 12px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);">
+              <div style="font-size: 0.72rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">Budget & Location</div>
+              <div style="font-size: 0.92rem; font-weight: 700; color: #34D399; margin-top: 3px;">${budgetStr}</div>
+              <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 2px;">
+                <i class="fas fa-location-dot" style="margin-right: 3px;"></i> ${escapeHtml(lead.preferred_location || 'Citywide')}
+              </div>
+            </div>
+
+            <div style="background: var(--bg-surface); padding: 12px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);">
+              <div style="font-size: 0.72rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">Contact & Assigned Agent</div>
+              <div style="font-size: 0.85rem; font-weight: 600; color: #fff; margin-top: 3px;">
+                ${lead.phone ? `<a href="tel:${escapeHtml(lead.phone)}" style="color: #60A5FA; text-decoration: none;"><i class="fas fa-phone"></i> ${escapeHtml(lead.phone)}</a>` : '<span style="color: var(--text-muted);">No phone</span>'}
+              </div>
+              <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 2px;">
+                ${lead.email ? `<a href="mailto:${escapeHtml(lead.email)}" style="color: var(--text-muted); text-decoration: none;"><i class="fas fa-envelope"></i> ${escapeHtml(lead.email)}</a>` : ''}
+              </div>
+              <div style="font-size: 0.75rem; color: #C4B5FD; margin-top: 4px;">
+                <i class="fas fa-user-tie"></i> ${escapeHtml(lead.assigned_to_name || 'Unassigned')}
+              </div>
+            </div>
+
+            <div style="background: var(--bg-surface); padding: 12px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);">
+              <div style="font-size: 0.72rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">Timeline & Schedules</div>
+              <div style="font-size: 0.85rem; font-weight: 600; color: ${lead.site_visit_date ? '#38BDF8' : 'var(--text-muted)'}; margin-top: 3px;">
+                <i class="fas fa-car"></i> Site Visit: <strong>${lead.site_visit_date ? formatDate(lead.site_visit_date) : 'None scheduled'}</strong>
+              </div>
+              <div style="font-size: 0.75rem; color: ${isOverdue ? '#F87171' : 'var(--text-secondary)'}; margin-top: 4px;">
+                ${isOverdue ? '<i class="fas fa-triangle-exclamation"></i> OVERDUE: ' : '<i class="far fa-calendar"></i> Next: '}<strong>${formatDate(lead.next_followup)}</strong>
+              </div>
+            </div>
+          </div>
+
+          <!-- AI Intelligence & Qualification Box -->
+          <div style="background: var(--bg-surface); padding: 14px 16px; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); border-left: 4px solid var(--accent-primary); margin-bottom: 18px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <span style="font-size: 0.75rem; font-weight: 700; color: #C4B5FD; text-transform: uppercase;">
+                <i class="fas fa-robot"></i> AI Lead Classification & Intelligence
+              </span>
+              <span style="font-size: 0.7rem; color: var(--text-muted);">Source: ${escapeHtml(lead.lead_source || lead.source || 'Direct')}</span>
+            </div>
+            <div style="font-size: 0.85rem; color: #E2E8F0; line-height: 1.5; margin-bottom: 8px;">
+              ${escapeHtml(lead.ai_classification || 'Standard customer inquiry. No automated anomalies detected.')}
+            </div>
+            <div style="background: var(--bg-main); padding: 8px 12px; border-radius: 4px; font-size: 0.82rem;">
+              <strong style="color: var(--accent-success);">Recommended Next Action:</strong>
+              <span style="color: #fff; margin-left: 4px;">${escapeHtml(lead.ai_suggested_action || 'Call prospect to schedule site visit')}</span>
+            </div>
+          </div>
+
+          <!-- Client Notes & Requirements -->
+          <div style="background: var(--bg-surface); padding: 14px 16px; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); margin-bottom: 18px;">
+            <div style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 6px;">
+              Client Inquiry Notes & Conversation Context
+            </div>
+            <div style="font-size: 0.85rem; color: #CBD5E1; line-height: 1.5; white-space: pre-wrap;">${escapeHtml(lead.notes || 'No custom notes provided.')}</div>
+          </div>
+        `;
+      }
+
+      if (footerEl) {
+        footerEl.innerHTML = `
+          <button class="btn btn-secondary" id="btn-detail-close">Close</button>
+          <button class="btn btn-secondary" id="btn-detail-edit"><i class="fas fa-pen-to-square"></i> Edit Lead</button>
+          <button class="btn btn-ai" id="btn-detail-draft"><i class="fas fa-feather-pointed"></i> Generate AI Follow-up</button>
+        `;
+
+        footerEl.querySelector('#btn-detail-close').addEventListener('click', () => {
+          modalInstance.close();
+        });
+
+        footerEl.querySelector('#btn-detail-draft').addEventListener('click', () => {
+          modalInstance.close();
+          openFollowupDraftModal(lead.id, lead.name);
+        });
+
+        footerEl.querySelector('#btn-detail-edit').addEventListener('click', () => {
+          modalInstance.close();
+          openEditLeadModal(lead, () => {
+            if (onUpdateCallback) onUpdateCallback();
+            openLeadDetailModal(lead.id, onUpdateCallback);
+          });
+        });
+      }
+    } catch (err) {
+      showToast(err.message || 'Failed loading lead details', 'error');
+      modalInstance.close();
+    }
+  }
+
+  // Edit Lead Modal
+  function openEditLeadModal(lead, onSavedCallback = null) {
+    showModal({
+      title: `Edit Lead: ${lead.name}`,
+      bodyHtml: `
+        <form id="edit-lead-form">
+          <div class="form-group">
+            <label class="form-label">Client / Buyer Name *</label>
+            <input type="text" id="edit-lead-name" class="form-control" required value="${escapeHtml(lead.name)}">
+          </div>
+          <div class="grid-2">
+            <div class="form-group">
+              <label class="form-label">Phone Number</label>
+              <input type="text" id="edit-lead-phone" class="form-control" value="${escapeHtml(lead.phone || '')}">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Email Address</label>
+              <input type="email" id="edit-lead-email" class="form-control" value="${escapeHtml(lead.email || '')}">
+            </div>
+          </div>
+          <div class="grid-2">
+            <div class="form-group">
+              <label class="form-label">Property Type</label>
+              <input type="text" id="edit-lead-prop-type" class="form-control" value="${escapeHtml(lead.property_type || '')}">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Preferred Locality / City</label>
+              <input type="text" id="edit-lead-loc" class="form-control" value="${escapeHtml(lead.preferred_location || '')}">
+            </div>
+          </div>
+          <div class="grid-2">
+            <div class="form-group">
+              <label class="form-label">Max Budget (in Lakhs)</label>
+              <input type="number" id="edit-lead-budget" class="form-control" value="${lead.budget_max || ''}">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Site Visit Date</label>
+              <input type="date" id="edit-lead-site-visit" class="form-control" value="${lead.site_visit_date || ''}">
+            </div>
+          </div>
+          <div class="grid-2">
+            <div class="form-group">
+              <label class="form-label">Pipeline Stage</label>
+              <select id="edit-lead-status" class="form-control">
+                ${['NEW', 'CONTACTED', 'QUALIFIED', 'PROPOSAL', 'NEGOTIATION', 'WON', 'LOST'].map(st => `
+                  <option value="${st}" ${lead.status === st ? 'selected' : ''}>${st}</option>
+                `).join('')}
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Priority</label>
+              <select id="edit-lead-priority" class="form-control">
+                ${['LOW', 'MEDIUM', 'HIGH', 'URGENT'].map(pr => `
+                  <option value="${pr}" ${lead.priority === pr ? 'selected' : ''}>${pr}</option>
+                `).join('')}
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Client Notes</label>
+            <textarea id="edit-lead-notes" class="form-control">${escapeHtml(lead.notes || '')}</textarea>
+          </div>
+        </form>
+      `,
+      footerButtons: [
+        { label: 'Cancel', className: 'btn-secondary' },
+        {
+          label: 'Save Changes',
+          className: 'btn-primary',
+          onClick: async (modalEl) => {
+            const name = modalEl.querySelector('#edit-lead-name').value.trim();
+            if (!name) {
+              showToast('Lead name is required', 'error');
+              return false;
+            }
+
+            const updateData = {
+              name,
+              phone: modalEl.querySelector('#edit-lead-phone').value.trim() || null,
+              email: modalEl.querySelector('#edit-lead-email').value.trim() || null,
+              propertyType: modalEl.querySelector('#edit-lead-prop-type').value.trim() || null,
+              preferredLocation: modalEl.querySelector('#edit-lead-loc').value.trim() || null,
+              budgetMax: modalEl.querySelector('#edit-lead-budget').value ? parseFloat(modalEl.querySelector('#edit-lead-budget').value) : null,
+              siteVisitDate: modalEl.querySelector('#edit-lead-site-visit').value || null,
+              status: modalEl.querySelector('#edit-lead-status').value,
+              priority: modalEl.querySelector('#edit-lead-priority').value,
+              notes: modalEl.querySelector('#edit-lead-notes').value.trim() || null,
+            };
+
+            try {
+              await APIClient.updateLead(lead.id, updateData);
+              showToast('Lead updated successfully', 'success');
+              if (onSavedCallback) onSavedCallback();
+              return true;
+            } catch (err) {
+              showToast(err.message || 'Failed updating lead', 'error');
+              return false;
+            }
+          }
+        }
+      ]
+    });
+  }
 
   // AI Lead Qualifier Modal (Natural Language Parsing)
   container.querySelector('#btn-ai-qualify').addEventListener('click', () => {
@@ -233,7 +531,6 @@ export async function renderLeadsView(container) {
               const qRes = await APIClient.qualifyRequirement(rawText);
               const q = qRes.data;
 
-              // Create Lead in CRM
               await APIClient.createLead({
                 name: `Inquiry (${q.propertyType !== 'Not provided.' ? q.propertyType : 'Buyer'})`,
                 propertyType: q.propertyType !== 'Not provided.' ? q.propertyType : null,
@@ -423,7 +720,7 @@ export async function renderLeadsView(container) {
     });
   });
 
-  // Follow-up Draft Modal (With scenario choice and no fake sending)
+  // Follow-up Draft Modal
   function openFollowupDraftModal(leadId, leadName) {
     showModal({
       title: `AI Real Estate Follow-up: ${leadName}`,
@@ -501,5 +798,11 @@ export async function renderLeadsView(container) {
     });
   }
 
-  loadLeads();
+  // Initial Load
+  await loadLeads();
+
+  // If context has leadId (direct route /leads/:id or /leads?id=...), open detail modal automatically
+  if (context.leadId) {
+    openLeadDetailModal(context.leadId, () => loadLeads());
+  }
 }

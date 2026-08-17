@@ -454,15 +454,51 @@ export class BusinessOperationsAgent extends BaseAgent {
       });
     }
 
-    // Alert: Critical Risks from Radar
-    for (const r of risks.filter(r => r.severity === 'CRITICAL')) {
+    // Alert: Critical Risks from Radar (Grouped by type to prevent spamming identical alerts)
+    const criticalRisks = risks.filter(r => r.severity === 'CRITICAL');
+    const slaBreaches = criticalRisks.filter(r => r.type === 'RISK_SLA_BREACH');
+    const stalledDeals = criticalRisks.filter(r => r.type === 'RISK_STALLED_NEGOTIATION');
+    const unassignedVips = criticalRisks.filter(r => r.type === 'RISK_UNASSIGNED_VIP');
+
+    if (slaBreaches.length > 0) {
+      const sampleNames = slaBreaches.map(r => r.customer_name).slice(0, 3).join(', ');
       alerts.push({
-        type: r.type,
+        type: 'RISK_SLA_BREACH',
         severity: 'CRITICAL',
-        title: r.title,
-        reason: r.reasons[0],
-        evidence: r.evidence,
-        recommended_action: r.next_action
+        title: slaBreaches.length === 1 ? 'High-Priority Follow-up SLA Breach' : `${slaBreaches.length} Follow-up SLA Breaches Detected`,
+        reason: slaBreaches.length === 1
+          ? slaBreaches[0].reasons[0]
+          : `${slaBreaches.length} high-priority customer follow-up(s) are overdue (${sampleNames}${slaBreaches.length > 3 ? '...' : ''}).`,
+        evidence: { count: slaBreaches.length, leads: slaBreaches.map(r => r.customer_name) },
+        recommended_action: slaBreaches.length === 1 ? slaBreaches[0].next_action : 'Instruct sales team to contact overdue high-priority prospects immediately.'
+      });
+    }
+
+    if (stalledDeals.length > 0) {
+      const sampleNames = stalledDeals.map(r => r.customer_name).slice(0, 3).join(', ');
+      alerts.push({
+        type: 'RISK_STALLED_NEGOTIATION',
+        severity: 'CRITICAL',
+        title: stalledDeals.length === 1 ? 'Stalled Commercial Negotiation' : `${stalledDeals.length} Stalled Deals Detected`,
+        reason: stalledDeals.length === 1
+          ? stalledDeals[0].reasons[0]
+          : `${stalledDeals.length} negotiation/proposal deal(s) have had no activity for over 5 days (${sampleNames}${stalledDeals.length > 3 ? '...' : ''}).`,
+        evidence: { count: stalledDeals.length, leads: stalledDeals.map(r => r.customer_name) },
+        recommended_action: 'Conduct executive deal review to unblock contract terms and prevent buyer drop-off.'
+      });
+    }
+
+    if (unassignedVips.length > 0) {
+      const sampleNames = unassignedVips.map(r => r.customer_name).slice(0, 3).join(', ');
+      alerts.push({
+        type: 'RISK_UNASSIGNED_VIP',
+        severity: 'CRITICAL',
+        title: unassignedVips.length === 1 ? 'Unassigned High-Value VIP Lead' : `${unassignedVips.length} Unassigned VIP Leads`,
+        reason: unassignedVips.length === 1
+          ? unassignedVips[0].reasons[0]
+          : `${unassignedVips.length} high-value buyer inquiry/inquiries have no assigned broker (${sampleNames}${unassignedVips.length > 3 ? '...' : ''}).`,
+        evidence: { count: unassignedVips.length, leads: unassignedVips.map(r => r.customer_name) },
+        recommended_action: 'Assign senior agents to VIP leads immediately to secure buyer engagement.'
       });
     }
 
@@ -484,7 +520,7 @@ export class BusinessOperationsAgent extends BaseAgent {
         type: 'SITE_VISITS_TODAY',
         severity: 'INFO',
         title: 'Scheduled Property Walkthroughs Today',
-        reason: `${siteVisitsToday.length} buyer site visit(s) scheduled for today.`,
+        reason: `${siteVisitsToday.length} buyer site visit(s) scheduled for today (${siteVisitsToday.map(l => l.name).join(', ')}).`,
         evidence: { count: siteVisitsToday.length, leads: siteVisitsToday.map(l => l.name) },
         recommended_action: 'Ensure assigned agents have verified property key access and brochures.'
       });

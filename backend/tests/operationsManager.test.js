@@ -450,3 +450,95 @@ test('Security & Multi-Tenant Isolation: Org B cannot access Org A operations te
     server.close();
   }
 });
+
+test('UAT-1 Regression: Site Visits Today and Upcoming Site Visits are strictly disjoint', async () => {
+  const todayVisits = leadRepo.getSiteVisitsToday(orgA.id);
+  const upcomingVisits = leadRepo.getUpcomingSiteVisits(orgA.id, 7);
+
+  const todayIds = new Set(todayVisits.map(v => v.id));
+  const overlap = upcomingVisits.filter(v => todayIds.has(v.id));
+
+  // Assert zero overlap between today and upcoming site visits
+  assert.equal(overlap.length, 0);
+
+  const server = app.listen(0);
+  const port = server.address().port;
+  try {
+    const res = await fetch(`http://127.0.0.1:${port}/api/leads/site-visits`, {
+      method: 'GET',
+      headers: { Authorization: `Bearer ${tokenOwnerA}` },
+    });
+    assert.equal(res.status, 200);
+    const json = await res.json();
+    assert.equal(json.success, true);
+    const apiTodayIds = new Set(json.data.today.map(v => v.id));
+    const apiOverlap = json.data.upcoming.filter(v => apiTodayIds.has(v.id));
+    assert.equal(apiOverlap.length, 0);
+  } finally {
+    server.close();
+  }
+});
+
+test('UAT-1 Regression: Proactive Alerts are consolidated and de-duplicated', () => {
+  const alerts = businessOperationsAgent.getProactiveAlerts(orgA.id);
+  assert.ok(Array.isArray(alerts));
+
+  // Check that every alert has a unique type
+  const alertTypes = alerts.map(a => a.type);
+  const uniqueTypes = new Set(alertTypes);
+  assert.equal(alertTypes.length, uniqueTypes.size);
+
+  // If there are SLA breaches, ensure they are consolidated in a single alert
+  const slaAlerts = alerts.filter(a => a.type === 'RISK_SLA_BREACH');
+  assert.ok(slaAlerts.length <= 1);
+});
+
+test('UAT-2 Regression: Clicking/opening a CRM lead navigates to its detail view and loads the correct lead', async () => {
+  const server = app.listen(0);
+  const port = server.address().port;
+
+  try {
+    // 1. Fetch single lead by ID
+    const res = await fetch(`http://127.0.0.1:${port}/api/leads/${vipStalledLead.id}`, {
+      method: 'GET',
+      headers: { Authorization: `Bearer ${tokenOwnerA}` },
+    });
+
+    assert.equal(res.status, 200);
+    const json = await res.json();
+    assert.equal(json.success, true);
+    assert.equal(json.data.id, vipStalledLead.id);
+    assert.equal(json.data.name, 'Vikramaditya Singhania');
+    assert.equal(json.data.company, 'Singhania Logistics Ltd');
+    assert.equal(json.data.property_type, 'Commercial Industrial Park (5000 sq yards)');
+    assert.equal(json.data.budget_max, 350);
+    assert.equal(json.data.status, 'NEGOTIATION');
+    assert.equal(json.data.priority, 'URGENT');
+
+    // 2. Cross-tenant isolation: Org B requesting Org A lead must receive 404 Not Found
+    const resForbidden = await fetch(`http://127.0.0.1:${port}/api/leads/${vipStalledLead.id}`, {
+      method: 'GET',
+      headers: { Authorization: `Bearer ${tokenOwnerB}` },
+    });
+    assert.equal(resForbidden.status, 404);
+
+    // 3. Updating lead details via PATCH
+    const patchRes = await fetch(`http://127.0.0.1:${port}/api/leads/${vipStalledLead.id}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${tokenOwnerA}`,
+      },
+      body: JSON.stringify({ notes: 'Updated negotiation notes via lead detail modal' }),
+    });
+
+    assert.equal(patchRes.status, 200);
+    const patchJson = await patchRes.json();
+    assert.equal(patchJson.success, true);
+    assert.equal(patchJson.data.notes, 'Updated negotiation notes via lead detail modal');
+  } finally {
+    server.close();
+  }
+});
+
+

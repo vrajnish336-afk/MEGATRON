@@ -410,10 +410,20 @@ export async function renderDashboardView(container) {
           }).join('');
       }
 
-      // 1. Render Proactive Alert Banner
+      // 1. Render Proactive Alert Banner (Deduplicated)
       const alertsContainer = container.querySelector('#urgent-alerts-container');
       alertsContainer.innerHTML = '';
-      const activeAlerts = opsAlerts?.alerts || brief.alerts || [];
+      const rawAlerts = opsAlerts?.alerts || brief.alerts || [];
+      const seenAlerts = new Set();
+      const activeAlerts = [];
+      for (const a of rawAlerts) {
+        const key = a.type || a.title || a.message;
+        if (key && !seenAlerts.has(key)) {
+          seenAlerts.add(key);
+          activeAlerts.push(a);
+        }
+      }
+
       if (activeAlerts.length > 0) {
         const criticalAlerts = activeAlerts.filter(a => a.severity === 'CRITICAL');
         const alertType = criticalAlerts.length > 0 ? 'danger' : 'warning';
@@ -590,7 +600,9 @@ export async function renderDashboardView(container) {
             <div style="background-color: var(--bg-surface); padding: 12px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); border-left: 3px solid ${isOverdue ? 'var(--accent-danger)' : (l.priority === 'URGENT' ? 'var(--accent-warning)' : 'var(--accent-primary)')};">
               <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                 <div>
-                  <div style="font-weight: 700; color: #fff; font-size: 0.9rem;">${escapeHtml(l.name)}</div>
+                  <div style="font-weight: 700; color: #fff; font-size: 0.9rem;">
+                    <a href="#/leads/${l.id}" style="color: #fff; text-decoration: none;">${escapeHtml(l.name)}</a>
+                  </div>
                   <div style="font-size: 0.75rem; color: #93C5FD; margin-top: 1px;">
                     <i class="fas fa-home"></i> ${escapeHtml(reqStr)} ${budgetStr ? `• ${budgetStr}` : ''} ${l.preferred_location ? `• ${escapeHtml(l.preferred_location)}` : ''}
                   </div>
@@ -619,16 +631,25 @@ export async function renderDashboardView(container) {
         });
       }
 
-      // 6. Render Site Visits
+      // 6. Render Site Visits (Deduplicated by lead ID)
       const visitsEl = container.querySelector('#site-visits-list');
-      const allVisits = [...siteVisits.today, ...siteVisits.upcoming].slice(0, 4);
+      const visitMap = new Map();
+      for (const v of [...(siteVisits.today || []), ...(siteVisits.upcoming || [])]) {
+        if (v && v.id && !visitMap.has(v.id)) {
+          visitMap.set(v.id, v);
+        }
+      }
+      const allVisits = Array.from(visitMap.values()).slice(0, 4);
+
       if (allVisits.length === 0) {
         visitsEl.innerHTML = `<div style="color: var(--text-muted); font-size: 0.85rem; padding: 10px 0;">No site visits scheduled for this week.</div>`;
       } else {
         visitsEl.innerHTML = allVisits.map(v => `
           <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: var(--bg-surface); border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);">
             <div>
-              <div style="font-size: 0.85rem; font-weight: 600; color: #fff;">${escapeHtml(v.name)}</div>
+              <div style="font-size: 0.85rem; font-weight: 600; color: #fff;">
+                <a href="#/leads/${v.id}" style="color: #fff; text-decoration: none;">${escapeHtml(v.name)}</a>
+              </div>
               <div style="font-size: 0.75rem; color: var(--text-muted);">${escapeHtml(v.property_type || 'Property')} • ${escapeHtml(v.preferred_location || 'Site')}</div>
             </div>
             <span class="badge badge-contacted"><i class="fas fa-calendar-day"></i> ${formatDate(v.site_visit_date)}</span>
