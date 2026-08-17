@@ -203,6 +203,24 @@ export class APIClient {
     return this.request(`/followups/${id}/reject`, { method: 'POST', body: JSON.stringify({ reason }) });
   }
 
+  // AI Sales Manager
+  static getSalesPriorities(params = {}) {
+    const query = new URLSearchParams(params).toString();
+    return this.request(`/sales/priorities${query ? `?${query}` : ''}`);
+  }
+
+  static getSalesLeadPriority(leadId) {
+    return this.request(`/sales/priorities/${leadId}`);
+  }
+
+  static getSalesDailyPlan() {
+    return this.request('/sales/daily-plan');
+  }
+
+  static explainSalesPriorities(query = '', leadId = null) {
+    return this.request('/sales/explain', { method: 'POST', body: JSON.stringify({ query, leadId }) });
+  }
+
   // Reports
   static getLeadReport() {
     return this.request('/reports/leads');

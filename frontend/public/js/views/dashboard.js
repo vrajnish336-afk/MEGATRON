@@ -3,7 +3,7 @@ import { state } from '../state.js';
 import { showToast, showModal, formatDate, formatDateTime, escapeHtml } from '../components/ui.js';
 
 export async function renderDashboardView(container) {
-  const userName = state.user?.name ? state.user.name.split(' ')[0] : 'Broker';
+  const userName = state.user?.name ? state.user.name.split(' ')[0] : 'Rajnish';
 
   container.innerHTML = `
     <div class="page-container">
@@ -113,7 +113,57 @@ export async function renderDashboardView(container) {
           </div>
         </div>
 
-        <!-- Section 3: AI Follow-up Assistant with Human-in-the-loop Approval -->
+        <!-- Section 3: AI Sales Manager — Priority Ranking & Next Best Actions -->
+        <div class="card" style="margin-bottom: 24px; border-top: 3px solid #10B981;" id="ai-sales-manager-section">
+          <div class="card-header" style="margin-bottom: 16px; flex-wrap: wrap; gap: 12px;">
+            <div>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 0.75rem; background: rgba(16, 185, 129, 0.15); color: #34D399; padding: 2px 8px; border-radius: var(--radius-full); font-weight: 700; text-transform: uppercase;">
+                  <i class="fas fa-chart-line"></i> Priority Engine
+                </span>
+                <span class="badge" style="background: var(--bg-surface); color: var(--text-secondary); border: 1px solid var(--border-subtle);">
+                  <i class="fas fa-database" style="color: var(--accent-success); margin-right: 4px;"></i> Live CRM Telemetry
+                </span>
+              </div>
+              <h2 class="card-title" style="font-size: 1.1rem; color: #fff; margin-top: 6px; letter-spacing: 0.05em; text-transform: uppercase;">
+                <i class="fas fa-user-tie" style="color: #10B981;"></i> AI Sales Manager — Today's Top Priorities
+              </h2>
+              <p class="card-subtitle">Deterministic scoring based on deal stage, overdue tasks, site visits, and buyer urgency</p>
+            </div>
+            <div style="display: flex; gap: 10px;">
+              <button id="btn-view-sales-plan" class="btn btn-primary btn-sm">
+                <i class="fas fa-clipboard-list"></i> View Full Sales Plan
+              </button>
+            </div>
+          </div>
+
+          <!-- Top 3 Priority Cards Grid -->
+          <div class="grid-3" id="sales-top-priorities-grid" style="gap: 14px; margin-bottom: 16px;">
+            <!-- Populated dynamically -->
+          </div>
+
+          <!-- AI Sales Guidance & Explanation -->
+          <div style="background: var(--bg-surface); padding: 14px 18px; border-radius: var(--radius-md); border: 1px solid var(--border-subtle); display: flex; flex-direction: column; gap: 10px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+              <span style="font-size: 0.8rem; font-weight: 700; color: #A7F3D0; text-transform: uppercase; letter-spacing: 0.04em;">
+                <i class="fas fa-circle-question"></i> Ask Sales Manager
+              </span>
+              <div style="display: flex; gap: 6px; flex-wrap: wrap;" id="sales-preset-buttons">
+                <button class="btn btn-secondary btn-xs btn-sales-preset" data-query="Who should my sales team focus on today, and why?">Who to call first?</button>
+                <button class="btn btn-secondary btn-xs btn-sales-preset" data-query="Create today's sales action plan.">Action Plan</button>
+              </div>
+            </div>
+            <div style="display: flex; gap: 10px;">
+              <input type="text" id="sales-query-input" class="form-control" placeholder="Ask AI Sales Manager (e.g. 'Why is Dr. Vivek Swaminathan top priority?', 'Who should we call first?')..." />
+              <button id="btn-sales-explain" class="btn btn-ai btn-sm" style="white-space: nowrap;">
+                <i class="fas fa-wand-magic-sparkles"></i> Ask
+              </button>
+            </div>
+            <div id="sales-ai-explanation-output" style="display: none; background: var(--bg-main); padding: 12px 16px; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); font-size: 0.88rem; color: #fff; line-height: 1.5; white-space: pre-wrap;"></div>
+          </div>
+        </div>
+
+        <!-- Section 4: AI Follow-up Assistant with Human-in-the-loop Approval -->
         <div class="card" style="margin-bottom: 24px; border-top: 3px solid var(--accent-ai);" id="ai-followup-assistant-section">
           <div class="card-header" style="margin-bottom: 16px;">
             <div>
@@ -232,13 +282,14 @@ export async function renderDashboardView(container) {
 
   async function loadDashboardData() {
     try {
-      const [briefRes, attentionRes, siteVisitsRes, tasksRes, impactRes, leadsRes] = await Promise.all([
+      const [briefRes, attentionRes, siteVisitsRes, tasksRes, impactRes, leadsRes, salesPlanRes] = await Promise.all([
         APIClient.getDailyBrief(),
         APIClient.getFollowupsNeedingAttention(5),
         APIClient.getSiteVisits(),
         APIClient.getTaskSchedule(),
         APIClient.getBusinessImpact(),
         APIClient.getLeads({ limit: 100 }),
+        APIClient.getSalesDailyPlan().catch(() => ({ data: null })),
       ]);
 
       const brief = briefRes.data;
@@ -402,7 +453,74 @@ export async function renderDashboardView(container) {
         `).join('');
       }
 
-      // 6. Render Business Impact
+      // 6. Render AI Sales Manager Top Priorities
+      const salesPrioritiesGrid = container.querySelector('#sales-top-priorities-grid');
+      const salesPlan = salesPlanRes?.data || null;
+      if (salesPrioritiesGrid) {
+        if (!salesPlan || salesPlan.total === 0 || !salesPlan.plan) {
+          salesPrioritiesGrid.innerHTML = `
+            <div style="grid-column: 1 / -1; background: var(--bg-surface); padding: 24px; border-radius: var(--radius-md); text-align: center; color: var(--text-muted); font-size: 0.9rem;">
+              Data unavailable. No customer leads or tasks found for priority scoring.
+            </div>
+          `;
+        } else {
+          const allRanked = [
+            ...(salesPlan.plan.URGENT || []),
+            ...(salesPlan.plan.HIGH || []),
+            ...(salesPlan.plan.MEDIUM || []),
+            ...(salesPlan.plan.LOW || []),
+          ];
+          const top3 = allRanked.slice(0, 3);
+          if (top3.length === 0) {
+            salesPrioritiesGrid.innerHTML = `
+              <div style="grid-column: 1 / -1; background: var(--bg-surface); padding: 24px; border-radius: var(--radius-md); text-align: center; color: var(--text-muted); font-size: 0.9rem;">
+                Data unavailable.
+              </div>
+            `;
+          } else {
+            salesPrioritiesGrid.innerHTML = top3.map((p, idx) => {
+              const priorityColors = {
+                URGENT: { bg: 'rgba(239, 68, 68, 0.15)', text: '#F87171', border: '#EF4444' },
+                HIGH: { bg: 'rgba(245, 158, 11, 0.15)', text: '#FBBF24', border: '#F59E0B' },
+                MEDIUM: { bg: 'rgba(59, 130, 246, 0.15)', text: '#60A5FA', border: '#3B82F6' },
+                LOW: { bg: 'rgba(107, 114, 128, 0.15)', text: '#9CA3AF', border: '#6B7280' },
+              };
+              const style = priorityColors[p.priority] || priorityColors.MEDIUM;
+
+              return `
+                <div style="background: var(--bg-surface); padding: 16px; border-radius: var(--radius-md); border: 1px solid var(--border-subtle); border-top: 3px solid ${style.border}; display: flex; flex-direction: column; justify-content: space-between;">
+                  <div>
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                      <div>
+                        <span style="font-size: 0.72rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">#${idx + 1} Priority Focus</span>
+                        <div style="font-weight: 700; color: #fff; font-size: 1.05rem; margin-top: 2px;">${escapeHtml(p.customer_name)}</div>
+                        <div style="font-size: 0.8rem; color: var(--text-secondary);">${escapeHtml(p.company || p.property_type || 'Buyer')} • <span class="badge" style="font-size: 0.7rem; padding: 1px 6px;">${escapeHtml(p.stage)}</span></div>
+                      </div>
+                      <span class="badge" style="background: ${style.bg}; color: ${style.text}; font-weight: 700; font-size: 0.75rem;">
+                        Score: ${p.score} • ${p.priority}
+                      </span>
+                    </div>
+
+                    <div style="font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 12px; background: var(--bg-main); padding: 8px 10px; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);">
+                      <div style="font-weight: 600; color: #E5E7EB; font-size: 0.75rem; text-transform: uppercase; margin-bottom: 4px;">Scoring Factors:</div>
+                      ${p.reasons && p.reasons.length > 0 ? p.reasons.slice(0, 2).map(r => `<div>• ${escapeHtml(r)}</div>`).join('') : '<div>• Live CRM engagement</div>'}
+                    </div>
+                  </div>
+
+                  <div style="padding-top: 10px; border-top: 1px solid var(--border-subtle);">
+                    <div style="font-size: 0.72rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; margin-bottom: 2px;">Next Best Action:</div>
+                    <div style="color: #34D399; font-weight: 600; font-size: 0.85rem; line-height: 1.4;">
+                      <i class="fas fa-arrow-right" style="margin-right: 4px;"></i> ${escapeHtml(p.next_action)}
+                    </div>
+                  </div>
+                </div>
+              `;
+            }).join('');
+          }
+        }
+      }
+
+      // 7. Render Business Impact
       const impactGrid = container.querySelector('#business-impact-grid');
       if (!impact.hasData || !impact.metrics) {
         impactGrid.innerHTML = `
@@ -522,6 +640,118 @@ export async function renderDashboardView(container) {
       showToast(err.message || 'Failed generating draft', 'error');
     });
   }
+
+    // AI Sales Manager Event Handlers
+    const btnViewSalesPlan = container.querySelector('#btn-view-sales-plan');
+    if (btnViewSalesPlan) {
+      btnViewSalesPlan.addEventListener('click', async () => {
+        try {
+          const res = await APIClient.getSalesDailyPlan();
+          const planData = res.data;
+          if (!planData || planData.total === 0) {
+            showToast('Data unavailable. No customer leads found.', 'info');
+            return;
+          }
+
+          const tiers = [
+            { name: 'URGENT', list: planData.plan?.URGENT || [], badgeColor: '#F87171', bg: 'rgba(239, 68, 68, 0.15)' },
+            { name: 'HIGH', list: planData.plan?.HIGH || [], badgeColor: '#FBBF24', bg: 'rgba(245, 158, 11, 0.15)' },
+            { name: 'MEDIUM', list: planData.plan?.MEDIUM || [], badgeColor: '#60A5FA', bg: 'rgba(59, 130, 246, 0.15)' },
+            { name: 'LOW', list: planData.plan?.LOW || [], badgeColor: '#9CA3AF', bg: 'rgba(107, 114, 128, 0.15)' },
+          ];
+
+          const htmlContent = `
+            <div style="margin-bottom: 16px;">
+              <div style="font-size: 0.88rem; color: var(--text-secondary); margin-bottom: 16px;">${escapeHtml(planData.summary)}</div>
+              <div style="display: flex; flex-direction: column; gap: 18px; max-height: 500px; overflow-y: auto; padding-right: 4px;">
+                ${tiers.map(tier => `
+                  <div>
+                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                      <span class="badge" style="background: ${tier.bg}; color: ${tier.badgeColor}; font-weight: 700;">
+                        ${tier.name} PRIORITY (${tier.list.length})
+                      </span>
+                    </div>
+                    ${tier.list.length === 0 ? `
+                      <div style="font-size: 0.8rem; color: var(--text-muted); padding: 8px 12px; background: var(--bg-surface); border-radius: var(--radius-sm);">No ${tier.name.toLowerCase()} priority leads.</div>
+                    ` : `
+                      <div style="display: flex; flex-direction: column; gap: 8px;">
+                        ${tier.list.map(p => `
+                          <div style="background: var(--bg-surface); padding: 12px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                            <div>
+                              <div style="font-weight: 700; color: #fff; font-size: 0.95rem;">${escapeHtml(p.customer_name)} <span style="font-size: 0.78rem; color: var(--text-muted); font-weight: normal;">(${escapeHtml(p.company || p.property_type || 'Buyer')} • Stage: ${escapeHtml(p.stage)})</span></div>
+                              <div style="font-size: 0.78rem; color: var(--text-secondary); margin-top: 3px;">
+                                <strong>Scoring:</strong> ${escapeHtml(p.reasons.join(' • '))}
+                              </div>
+                            </div>
+                            <div style="text-align: right;">
+                              <div class="badge" style="background: ${tier.bg}; color: ${tier.badgeColor}; font-weight: 700; margin-bottom: 4px;">Score: ${p.score}</div>
+                              <div style="font-size: 0.82rem; color: #34D399; font-weight: 600;"><i class="fas fa-arrow-right"></i> ${escapeHtml(p.next_action)}</div>
+                            </div>
+                          </div>
+                        `).join('')}
+                      </div>
+                    `}
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          `;
+
+          showModal({
+            title: 'Sales Team Daily Action Plan',
+            bodyHtml: htmlContent,
+            footerButtons: [{ label: 'Close', className: 'btn-secondary' }],
+          });
+        } catch (err) {
+          showToast(err.message || 'Failed loading sales plan', 'error');
+        }
+      });
+    }
+
+    const btnSalesExplain = container.querySelector('#btn-sales-explain');
+    const salesQueryInput = container.querySelector('#sales-query-input');
+    const salesOutput = container.querySelector('#sales-ai-explanation-output');
+
+    async function handleSalesExplanation(queryText) {
+      const query = (queryText || salesQueryInput.value || '').trim();
+      if (!query) {
+        showToast('Please enter a question for the Sales Manager', 'warning');
+        salesQueryInput.focus();
+        return;
+      }
+
+      btnSalesExplain.disabled = true;
+      btnSalesExplain.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Analyzing...';
+      salesOutput.style.display = 'block';
+      salesOutput.innerHTML = '<span style="color: var(--text-muted);"><i class="fas fa-microchip fa-spin"></i> Consulting live CRM database & generating sales guidance...</span>';
+
+      try {
+        const res = await APIClient.explainSalesPriorities(query);
+        const answer = res.data?.answer || 'No guidance generated.';
+        salesOutput.innerHTML = escapeHtml(answer).replace(/\n/g, '<br>');
+      } catch (err) {
+        salesOutput.innerHTML = `<span style="color: var(--accent-danger);">Failed to generate explanation: ${escapeHtml(err.message || 'Unknown error')}</span>`;
+      } finally {
+        btnSalesExplain.disabled = false;
+        btnSalesExplain.innerHTML = '<i class="fas fa-wand-magic-sparkles"></i> Ask';
+      }
+    }
+
+    if (btnSalesExplain && salesQueryInput) {
+      btnSalesExplain.addEventListener('click', () => handleSalesExplanation());
+      salesQueryInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') handleSalesExplanation();
+      });
+    }
+
+    const presetBtns = container.querySelectorAll('.btn-sales-preset');
+    presetBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const query = btn.dataset.query;
+        if (salesQueryInput) salesQueryInput.value = query;
+        handleSalesExplanation(query);
+      });
+    });
 
     // AI Follow-up Assistant Event Handlers
     const generateBtn = container.querySelector('#btn-generate-followup-draft');

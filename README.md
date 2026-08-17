@@ -74,7 +74,7 @@ npm start
 Open your browser at **`http://localhost:5000`** (or **`http://localhost:5000/landing.html`** for the public product page).
 
 ### Demo Login Personas (Fictional Demo Dataset):
-- **Principal Broker / Owner**: `rohit.sharma@apexrealty.demo` / `megadrone123`
+- **Principal Broker / Owner**: `rajnish.verma@apexrealty.demo` / `megadrone123`
 - **Sales Manager**: `anjali.mehta@apexrealty.demo` / `megadrone123`
 - **Senior Agent**: `vikram.singh@apexrealty.demo` / `megadrone123`
 

@@ -46,8 +46,8 @@ A comprehensive, zero-assumption audit and real-world verification was performed
 ### Issue MD-AUDIT-03 [LOW]: Demo Login Default Credentials Alignment
 - **Location**: [`frontend/public/js/views/login.js`](file:///D:/megatron%20ai/frontend/public/js/views/login.js)
 - **Severity**: **LOW**
-- **Problem**: Demo quick switcher buttons were updated for Apex Realty (`rohit.sharma@apexrealty.demo`), but the initial text field default needed alignment.
-- **Fix**: Aligned default input value to `rohit.sharma@apexrealty.demo`.
+- **Problem**: Demo quick switcher buttons were updated for Apex Realty (`rajnish.verma@apexrealty.demo`), but the initial text field default needed alignment.
+- **Fix**: Aligned default input value to `rajnish.verma@apexrealty.demo`.
 - **Verification**: Verified via manual login test.
 
 ---
@@ -108,7 +108,7 @@ node --test backend/tests/megadrone.test.js
 |---|---|:---:|---|
 | Landing Page | `landing.html` | **PASSED** | Headline, Problem/Solution, Features, Security, Tiered Pricing |
 | Authentication & Sign-in | `login.js` | **PASSED** | 1-click Broker/Manager/Agent persona login |
-| Executive Dashboard | `dashboard.js` | **PASSED** | "Good morning, Rohit", verified Today's Brief, Attention queue, Site visits |
+| Executive Dashboard | `dashboard.js` | **PASSED** | "Good morning, Rajnish", verified Today's Brief, Attention queue, Site visits |
 | CRM Pipeline & Qualifier | `leads.js` | **PASSED** | AI parsing of unformatted inquiry, requirement badges, filters |
 | Follow-up Draft & Safety | `dashboard.js` / `leads.js` | **PASSED** | Scenario drafting with explicit human approval guardrails |
 | Approval Queue | `approvals.js` | **PASSED** | High-risk interception, JSON inspector, Authorize/Reject |

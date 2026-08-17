@@ -72,7 +72,7 @@ All demo accounts and lead records are explicitly marked and isolated:
 
 - **Organization**: `Apex Realty Advisors [DEMO]` (`org_apex_realty`)
 - **Demo Personas**:
-  - Principal Broker / Owner: `rohit.sharma@apexrealty.demo` / `megadrone123`
+  - Principal Broker / Owner: `rajnish.verma@apexrealty.demo` / `megadrone123`
   - Sales Manager: `anjali.mehta@apexrealty.demo` / `megadrone123`
   - Senior Agent: `vikram.singh@apexrealty.demo` / `megadrone123`
 - **Demo CRM Leads**: 20 realistic fictional real estate buyers/investors across Jaipur, Gurugram, Mumbai, Bangalore, Pune, and Noida.

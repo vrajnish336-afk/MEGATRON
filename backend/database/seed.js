@@ -1,4 +1,5 @@
 import { runMigrations } from './migrations.js';
+import { db } from './db.js';
 import { orgRepo } from './repositories/orgRepo.js';
 import { userRepo } from './repositories/userRepo.js';
 import { leadRepo } from './repositories/leadRepo.js';
@@ -45,15 +46,24 @@ export async function seedDatabase() {
   // 2. Users
   const defaultPasswordHash = await hashPassword('megadrone123');
 
-  let owner = userRepo.findByEmail('rohit.sharma@apexrealty.demo');
+  let owner = userRepo.findByEmail('rajnish.verma@apexrealty.demo');
   if (!owner) {
-    owner = userRepo.create({
-      orgId: org.id,
-      name: 'Rohit Sharma (Principal Broker)',
-      email: 'rohit.sharma@apexrealty.demo',
-      passwordHash: defaultPasswordHash,
-      role: ROLES.OWNER,
-    });
+    const oldOwner = userRepo.findByEmail('rohit.sharma@apexrealty.demo');
+    if (oldOwner) {
+      db.execute(
+        `UPDATE users SET name = 'Rajnish Verma (Principal Broker)', email = 'rajnish.verma@apexrealty.demo' WHERE id = ?`,
+        [oldOwner.id]
+      );
+      owner = userRepo.findById(oldOwner.id);
+    } else {
+      owner = userRepo.create({
+        orgId: org.id,
+        name: 'Rajnish Verma (Principal Broker)',
+        email: 'rajnish.verma@apexrealty.demo',
+        passwordHash: defaultPasswordHash,
+        role: ROLES.OWNER,
+      });
+    }
   }
 
   let manager = userRepo.findByEmail('anjali.mehta@apexrealty.demo');
@@ -648,7 +658,7 @@ export async function seedDatabase() {
         recipientEmail: 'rajesh@khandelwaljewels.com',
         recipientName: 'Rajesh Khandelwal',
         subject: 'Formal Commercial Proposal & Payment Terms - MI Road Showroom',
-        body: 'Dear Mr. Khandelwal,\n\nFollowing up on our discussions with the project developers, we have secured formal approval for the commercial unit at ₹1.98 Cr inclusive of dedicated basement parking.\n\nPlease review the attached term sheet.\n\nWarm regards,\nRohit Sharma\nApex Realty Advisors',
+        body: 'Dear Mr. Khandelwal,\n\nFollowing up on our discussions with the project developers, we have secured formal approval for the commercial unit at ₹1.98 Cr inclusive of dedicated basement parking.\n\nPlease review the attached term sheet.\n\nWarm regards,\nRajnish Verma\nApex Realty Advisors',
       },
       reason: 'Outbound commercial agreement with pricing concessions requires broker authorization before WhatsApp/Email dispatch.',
       requestedBy: 'AI_ORCHESTRATOR',
@@ -668,7 +678,7 @@ export async function seedDatabase() {
 
   logger.info('====================================================');
   logger.info('  Real Estate Seed Complete! Login Credentials:');
-  logger.info('  Broker/Owner:  rohit.sharma@apexrealty.demo   / megadrone123');
+  logger.info('  Broker/Owner:  rajnish.verma@apexrealty.demo  / megadrone123');
   logger.info('  Manager:       anjali.mehta@apexrealty.demo   / megadrone123');
   logger.info('  Agent:         vikram.singh@apexrealty.demo   / megadrone123');
   logger.info('====================================================');

@@ -17,7 +17,7 @@ export function renderLoginView(container) {
         <form id="login-form">
           <div class="form-group">
             <label class="form-label">Agency Work Email</label>
-            <input type="email" id="login-email" class="form-control" placeholder="broker@agency.com" required value="rohit.sharma@apexrealty.demo">
+            <input type="email" id="login-email" class="form-control" placeholder="broker@agency.com" required value="rajnish.verma@apexrealty.demo">
           </div>
 
           <div class="form-group" style="margin-bottom: 24px;">
@@ -35,7 +35,7 @@ export function renderLoginView(container) {
             1-Click Demo Login (Apex Realty Advisors)
           </div>
           <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;">
-            <button type="button" class="btn btn-secondary btn-sm demo-login-btn" data-email="rohit.sharma@apexrealty.demo">
+            <button type="button" class="btn btn-secondary btn-sm demo-login-btn" data-email="rajnish.verma@apexrealty.demo">
               Principal Broker
             </button>
             <button type="button" class="btn btn-secondary btn-sm demo-login-btn" data-email="anjali.mehta@apexrealty.demo">

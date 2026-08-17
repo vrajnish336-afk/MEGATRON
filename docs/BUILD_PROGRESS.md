@@ -81,17 +81,30 @@
   - **Human Approval Queue Integration** (`backend/database/repositories/approvalRepo.js`, `backend/api/routes/approvals.js`): Action type `COMMUNICATION_DRAFT`, lifecycle states `PENDING_APPROVAL`, `APPROVED`, `REJECTED`.
   - **Strict Safety Guardrails**: Zero automatic dispatch, no fake communication logs, mandatory banner: `"Draft generated. Human approval required before sending."`.
   - **Dashboard AI Follow-up Assistant** (`frontend/public/js/views/dashboard.js`, `approvals.js`, `api.js`): Interactive UI for lead selection, reason picking, language selection, live draft generation, inline editing, and one-click approve/reject actions.
-  - **Automated Validation**: 35/35 automated unit and integration tests passing (`backend/tests/megadrone.test.js`, `backend/tests/followupApi.test.js`).
+- [x] **Phase 4: AI Sales Manager & Daily Priority Engine**
+  - **AI Sales Manager Agent** (`backend/agents/salesManagerAgent.js`): Intelligent agent calculating deterministic urgency and deal value scores across live leads, overdue tasks, site visits, and pipeline stages.
+  - **Transparent Deterministic Scoring Model**: Explainable factor-based scoring (+30 Negotiation, +20 Proposal, +25 Overdue Task, +20 Urgent Task, +25 Site Visit Today, +15 Upcoming Site Visit, +15 Overdue Follow-up, +15 High Priority, +10 Recent Activity, -30 Lost, -20 Won) categorized into `URGENT`, `HIGH`, `MEDIUM`, `LOW`.
+  - **Next Best Action Engine**: Context-driven single actionable recommendation per customer (e.g. Prepare negotiation sheet, conduct property walkthrough, address overdue deliverable).
+  - **Sales Team Daily Plan**: Grouped operational roadmap with executive pipeline summary and deal distribution metrics.
+  - **Conversational Sales Guidance**: Natural language priority explanations answering questions like *"Who should we call first today?"* and *"Why is Rajesh top priority?"* grounded strictly in live database records with zero metric fabrication.
+  - **Dedicated REST API** (`backend/api/routes/sales.js`):
+    - `GET /api/sales/priorities`: Returns ranked customer priority list.
+    - `GET /api/sales/priorities/:leadId`: Returns detailed scoring breakdown for a specific lead.
+    - `GET /api/sales/daily-plan`: Returns grouped daily sales plan.
+    - `POST /api/sales/explain`: Natural-language priority reasoning.
+  - **Dashboard AI Sales Manager Card** (`frontend/public/js/views/dashboard.js`, `api.js`): Top 3 Priority Focus cards, scoring factor breakdown, next best action highlights, full daily sales plan modal, and interactive query assistant.
+  - **Automated Validation**: 46/46 automated unit and integration tests passing (`megadrone.test.js`, `followupApi.test.js`, `salesManager.test.js`).
 
 ---
 
 ## Verification Results
 
-- **Automated Tests Executed**: 35 tests across unit and integration test suites (`megadrone.test.js`, `followupApi.test.js`)
-- **Passed**: 35 / 35 (100% pass rate, 0 failures)
+- **Automated Tests Executed**: 46 tests across unit and integration test suites (`megadrone.test.js`, `followupApi.test.js`, `salesManager.test.js`)
+- **Passed**: 46 / 46 (100% pass rate, 0 failures)
+- **AI Sales Manager & Priority Ranking**: Verified (Deterministic scoring, next best actions, daily sales plan, conversational guidance)
 - **AI Follow-up Draft Generator**: Verified (English, Hindi Devanagari, Hinglish conversational)
 - **Human Approval Guardrails**: Verified (Drafts require explicit supervisor approval; rejected drafts cannot dispatch)
 - **Database Integrity & Concurrency**: Passed (WAL mode, Foreign keys, SQLite busy timeout handling)
 - **Hard Guardrails**: Passed (Financial operations prohibited, Communication safety preserved)
 - **Multi-Tenant Isolation**: Passed (Strict tenant boundary checks)
-- **UI Responsiveness & Interactivity**: Complete (AI Follow-up Assistant, Approvals Queue, Lead CRM, Real Estate Dashboard)
+- **UI Responsiveness & Interactivity**: Complete (AI Sales Manager, AI Follow-up Assistant, Approvals Queue, Lead CRM, Real Estate Dashboard)

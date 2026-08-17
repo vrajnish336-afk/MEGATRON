@@ -19,8 +19,8 @@ This step-by-step walkthrough is designed for demonstrating MEGADRONE Business O
 
 ## 2. Executive Dashboard: Today's Real Estate Brief (Minute 0:45 – 1:30)
 **Action**:
-1. Open `http://localhost:5000` and click **"Principal Broker"** to log in as `rohit.sharma@apexrealty.demo`.
-2. Notice the **Good morning, Rohit** greeting and **TODAY'S BUSINESS BRIEF**:
+1. Open `http://localhost:5000` and click **"Principal Broker"** to log in as `rajnish.verma@apexrealty.demo`.
+2. Notice the **Good morning, Rajnish** greeting and **TODAY'S BUSINESS BRIEF**:
    - Live verified counts of: **New Inbound Leads**, **Hot Leads**, **Site Visits Today**, **Overdue Follow-ups**, **Negotiations**, and **Won Deals**.
    - Zero hallucinated numbers: every number reflects active database records.
 3. Review the **"Executive AI Assessment & Priorities"** highlighting urgent site visits and closing negotiations for the day.
