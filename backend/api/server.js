@@ -2,8 +2,9 @@ import express from 'express';
 import cors from 'cors';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { config } from '../core/config.js';
+import { config, validateProductionConfig } from '../core/config.js';
 import { logger } from '../core/logger.js';
+import { db } from '../database/db.js';
 import { runMigrations } from '../database/migrations.js';
 import { initializeTools } from '../tools/systemTools.js';
 import { errorHandler } from './middleware/errorHandler.js';
@@ -32,12 +33,17 @@ const frontendDist = path.resolve(__dirname, '../../frontend/public');
 export function createApp() {
   const app = express();
 
-  // Basic security & parsing
+  // Production CORS: Restrict to configured origin when in production, allow permissive in development
+  const corsOrigin = config.env === 'production'
+    ? (config.frontendUrl && config.frontendUrl !== '*' ? config.frontendUrl.split(',').map(u => u.trim()) : false)
+    : '*';
+
   app.use(cors({
-    origin: '*',
+    origin: corsOrigin,
     methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
   }));
+  
   app.use(express.json({ limit: '5mb' }));
 
   // Request logger middleware
@@ -94,8 +100,24 @@ export function createApp() {
   return app;
 }
 
+export async function stopServer(server) {
+  return new Promise((resolve) => {
+    if (!server) {
+      try { db.close(); } catch {}
+      return resolve();
+    }
+    server.close(() => {
+      try { db.close(); } catch {}
+      resolve();
+    });
+  });
+}
+
 export async function startServer() {
   try {
+    // 0. Validate production configuration
+    validateProductionConfig();
+
     logger.info('====================================================');
     logger.info('  MEGADRONE Business OS - Bootstrapping System');
     logger.info('====================================================');
@@ -112,6 +134,30 @@ export async function startServer() {
       logger.info(`MEGADRONE API Server online at http://${config.host}:${config.port}`);
       logger.info(`Environment: ${config.env}`);
     });
+
+    // 4. Register Graceful Shutdown Handlers
+    const handleShutdown = (signal) => {
+      logger.info(`Received ${signal}. Initiating graceful shutdown...`);
+      server.close(() => {
+        logger.info('HTTP server closed.');
+        try {
+          db.close();
+          logger.info('Database connection closed.');
+        } catch (dbErr) {
+          logger.error('Error closing database during shutdown:', { error: dbErr.message });
+        }
+        logger.info('MEGADRONE graceful shutdown complete.');
+        process.exit(0);
+      });
+
+      setTimeout(() => {
+        logger.error('Force shutdown after timeout.');
+        process.exit(1);
+      }, 10000).unref();
+    };
+
+    process.once('SIGTERM', () => handleShutdown('SIGTERM'));
+    process.once('SIGINT', () => handleShutdown('SIGINT'));
 
     return { app, server };
   } catch (err) {

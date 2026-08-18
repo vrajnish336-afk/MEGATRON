@@ -6,6 +6,7 @@ import { auditRepo } from '../../database/repositories/auditRepo.js';
 import { hashPassword, comparePassword, generateToken } from '../../security/crypto.js';
 import { BadRequestError, UnauthorizedError, ConflictError } from '../../core/errors.js';
 import { authenticate } from '../middleware/auth.js';
+import { loginRateLimiter } from '../middleware/rateLimiter.js';
 import { ROLES } from '../../permissions/roles.js';
 
 const router = Router();
@@ -96,7 +97,7 @@ router.post('/register', async (req, res, next) => {
 });
 
 // Login
-router.post('/login', async (req, res, next) => {
+router.post('/login', loginRateLimiter, async (req, res, next) => {
   try {
     const data = LoginSchema.parse(req.body);
     const user = userRepo.findByEmail(data.email);

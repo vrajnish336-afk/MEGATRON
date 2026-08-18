@@ -71,3 +71,35 @@ export const config = {
     sanitizeSecrets: process.env.SANITIZE_SECRETS_IN_LOGS !== 'false',
   }
 };
+
+const KNOWN_DEV_FALLBACK_SECRETS = new Set([
+  'megadrone_fallback_secret_key_1234567890',
+  'replace_with_a_secure_random_string_at_least_32_characters_long',
+  'secret',
+  'jwt_secret',
+  'changeme',
+]);
+
+/**
+ * Validates configuration for production readiness.
+ * Throws an error if required production environment variables are missing or insecure.
+ */
+export function validateProductionConfig(cfg = config) {
+  if (cfg.env === 'production') {
+    const rawEnvSecret = process.env.JWT_SECRET;
+    const secret = cfg.jwt?.secret;
+
+    if (!rawEnvSecret || !secret || typeof secret !== 'string') {
+      throw new Error('Production startup blocked: JWT_SECRET must be explicitly configured.');
+    }
+
+    if (secret.length < 32) {
+      throw new Error('Production startup blocked: JWT_SECRET must be at least 32 characters long.');
+    }
+
+    if (KNOWN_DEV_FALLBACK_SECRETS.has(secret.toLowerCase().trim())) {
+      throw new Error('Production startup blocked: JWT_SECRET must be explicitly configured and not use default development strings.');
+    }
+  }
+  return true;
+}
