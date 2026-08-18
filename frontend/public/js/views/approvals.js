@@ -30,6 +30,18 @@ export async function renderApprovalsView(container) {
 
   async function loadApprovals() {
     const listEl = container.querySelector('#approvals-container');
+    listEl.innerHTML = `
+      <div class="skeleton-card" style="min-height: 120px;">
+        <div class="skeleton skeleton-text" style="width: 30%; height: 18px;"></div>
+        <div class="skeleton skeleton-text" style="width: 60%; height: 14px;"></div>
+        <div class="skeleton skeleton-box" style="height: 50px;"></div>
+      </div>
+      <div class="skeleton-card" style="min-height: 120px;">
+        <div class="skeleton skeleton-text" style="width: 30%; height: 18px;"></div>
+        <div class="skeleton skeleton-text" style="width: 60%; height: 14px;"></div>
+        <div class="skeleton skeleton-box" style="height: 50px;"></div>
+      </div>
+    `;
     try {
       const res = await APIClient.getApprovals();
       const approvals = res.data;

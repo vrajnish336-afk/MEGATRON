@@ -1,6 +1,6 @@
 import { APIClient } from '../api.js';
 import { state } from '../state.js';
-import { showToast, showModal, formatDate, formatDateTime, escapeHtml } from '../components/ui.js';
+import { showToast, showModal, formatDate, formatDateTime, escapeHtml, animateNumber } from '../components/ui.js';
 
 export async function renderDashboardView(container) {
   let userName = state.user?.name ? state.user.name.split(' ')[0] : 'Rajnish';
@@ -8,33 +8,79 @@ export async function renderDashboardView(container) {
 
   container.innerHTML = `
     <div class="page-container">
-      <!-- Executive Greeting & Controls -->
-      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;">
-        <div>
-          <div style="display: flex; align-items: center; gap: 8px;">
-            <span style="font-size: 0.8rem; background: rgba(59, 130, 246, 0.15); color: #60A5FA; padding: 2px 8px; border-radius: var(--radius-full); font-weight: 700; text-transform: uppercase;">
-              <i class="fas fa-building"></i> Real Estate Operations
-            </span>
-            <span style="font-size: 0.8rem; color: var(--text-muted);">${formatDate(new Date().toISOString())}</span>
+      <!-- Executive Command Center Hero & Telemetry Banner -->
+      <div class="command-hero stagger-item stagger-1" id="dashboard-greeting-section">
+        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;">
+          <div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="font-size: 0.75rem; background: rgba(56, 189, 248, 0.2); color: #38BDF8; border: 1px solid rgba(56, 189, 248, 0.35); padding: 2px 8px; border-radius: var(--radius-full); font-weight: 800; text-transform: uppercase;">
+                <i class="fas fa-microchip"></i> AI Command Core
+              </span>
+              <span style="font-size: 0.78rem; color: var(--text-muted); font-family: var(--font-mono);">${formatDate(new Date().toISOString())}</span>
+            </div>
+            <h1 style="font-size: 1.75rem; font-weight: 800; color: #fff; letter-spacing: -0.02em; margin-top: 6px;">
+              Good morning, ${escapeHtml(userName)}.
+            </h1>
+            <p style="font-size: 0.88rem; color: var(--text-secondary);">Your business command center is active. Verified telemetry, risk radar, and prioritized pipeline follow-ups loaded.</p>
           </div>
-          <h1 style="font-size: 1.7rem; font-weight: 800; color: #fff; letter-spacing: -0.02em; margin-top: 4px;">
-            Good morning, ${escapeHtml(userName)}.
-          </h1>
-          <p style="font-size: 0.85rem; color: var(--text-secondary);">Here is your agency's verified operational health, executive action plan, and prioritized buyer follow-ups for today.</p>
+          <div style="display: flex; gap: 10px;">
+            <button id="btn-refresh-brief" class="btn btn-ai btn-sm">
+              <i class="fas fa-arrows-rotate"></i> Refresh Telemetry
+            </button>
+            <a href="#/assistant" class="btn btn-primary btn-sm">
+              <i class="fas fa-terminal"></i> AI Assistant Console
+            </a>
+          </div>
         </div>
-        <div style="display: flex; gap: 10px;">
-          <button id="btn-refresh-brief" class="btn btn-ai btn-sm">
-            <i class="fas fa-robot"></i> Refresh Operations Brief
-          </button>
-          <a href="#/assistant" class="btn btn-primary btn-sm">
-            <i class="fas fa-terminal"></i> AI Assistant
-          </a>
+
+        <div class="command-hero-grid">
+          <div class="hero-telemetry-badge">
+            <span class="hero-telemetry-label"><i class="fas fa-heart-pulse" style="color: #38BDF8;"></i> Operational Health</span>
+            <span class="hero-telemetry-val" id="hero-telemetry-health" style="color: #38BDF8;">-- / 100</span>
+          </div>
+          <div class="hero-telemetry-badge">
+            <span class="hero-telemetry-label"><i class="fas fa-shield-halved" style="color: #FBBF24;"></i> Risk Level</span>
+            <span class="hero-telemetry-val" id="hero-telemetry-risk" style="font-size: 1.15rem; color: #FBBF24; margin-top: 8px;">CALCULATING</span>
+          </div>
+          <div class="hero-telemetry-badge">
+            <span class="hero-telemetry-label"><i class="fas fa-phone-volume" style="color: #34D399;"></i> Priority Actions</span>
+            <span class="hero-telemetry-val" id="hero-telemetry-actions" style="color: #34D399;">--</span>
+          </div>
+          <div class="hero-telemetry-badge">
+            <span class="hero-telemetry-label"><i class="fas fa-stamp" style="color: #A78BFA;"></i> Pending Approvals</span>
+            <span class="hero-telemetry-val" id="hero-telemetry-approvals" style="color: #A78BFA;">--</span>
+          </div>
         </div>
       </div>
 
-      <div id="dashboard-loading" style="text-align: center; padding: 40px;">
-        <div class="loader-spinner" style="margin: 0 auto 12px auto;"></div>
-        <span style="color: var(--text-muted); font-size: 0.9rem;">Gathering live real estate operations intelligence...</span>
+      <!-- Skeleton Loading State -->
+      <div id="dashboard-loading" class="motion-fade-in" style="display: flex; flex-direction: column; gap: 20px;">
+        <div class="skeleton-card" style="min-height: 180px;">
+          <div class="skeleton skeleton-text" style="width: 25%; height: 16px;"></div>
+          <div class="skeleton skeleton-text" style="width: 45%; height: 26px;"></div>
+          <div style="display: grid; grid-template-columns: 240px 1fr; gap: 16px; margin-top: 10px;">
+            <div class="skeleton skeleton-box" style="height: 120px;"></div>
+            <div class="skeleton skeleton-box" style="height: 120px;"></div>
+          </div>
+        </div>
+        <div class="grid-4">
+          <div class="skeleton-card" style="height: 110px;">
+            <div class="skeleton skeleton-text" style="width: 40%; height: 14px;"></div>
+            <div class="skeleton skeleton-text" style="width: 60%; height: 32px;"></div>
+          </div>
+          <div class="skeleton-card" style="height: 110px;">
+            <div class="skeleton skeleton-text" style="width: 40%; height: 14px;"></div>
+            <div class="skeleton skeleton-text" style="width: 60%; height: 32px;"></div>
+          </div>
+          <div class="skeleton-card" style="height: 110px;">
+            <div class="skeleton skeleton-text" style="width: 40%; height: 14px;"></div>
+            <div class="skeleton skeleton-text" style="width: 60%; height: 32px;"></div>
+          </div>
+          <div class="skeleton-card" style="height: 110px;">
+            <div class="skeleton skeleton-text" style="width: 40%; height: 14px;"></div>
+            <div class="skeleton skeleton-text" style="width: 60%; height: 32px;"></div>
+          </div>
+        </div>
       </div>
 
       <div id="dashboard-content" style="display: none;">
@@ -42,11 +88,11 @@ export async function renderDashboardView(container) {
         <div id="urgent-alerts-container"></div>
 
         <!-- Section 1: AI BUSINESS OPERATIONS MANAGER — OPERATIONAL HEALTH & RADAR -->
-        <div class="card" style="margin-bottom: 24px; border-top: 3px solid #3B82F6;" id="ai-operations-manager-section">
+        <div class="card stagger-item stagger-2" style="margin-bottom: 24px; border-top: 3px solid #38BDF8;" id="ai-operations-manager-section">
           <div class="card-header" style="margin-bottom: 16px; flex-wrap: wrap; gap: 12px;">
             <div>
               <div style="display: flex; align-items: center; gap: 8px;">
-                <span style="font-size: 0.75rem; background: rgba(59, 130, 246, 0.15); color: #60A5FA; padding: 2px 8px; border-radius: var(--radius-full); font-weight: 700; text-transform: uppercase;">
+                <span style="font-size: 0.75rem; background: rgba(56, 189, 248, 0.18); color: #38BDF8; padding: 2px 8px; border-radius: var(--radius-full); font-weight: 800; text-transform: uppercase;">
                   <i class="fas fa-shield-halved"></i> Executive Layer
                 </span>
                 <span class="badge" style="background: var(--bg-surface); color: var(--text-secondary); border: 1px solid var(--border-subtle);">
@@ -54,7 +100,7 @@ export async function renderDashboardView(container) {
                 </span>
               </div>
               <h2 class="card-title" style="font-size: 1.15rem; color: #fff; margin-top: 6px; letter-spacing: 0.05em; text-transform: uppercase;">
-                <i class="fas fa-chart-line" style="color: #3B82F6;"></i> AI Business Operations Manager
+                <i class="fas fa-chart-line" style="color: #38BDF8;"></i> AI Business Operations Manager
               </h2>
               <p class="card-subtitle">Executive health index, opportunity & risk radar, and prioritized daily action roadmap</p>
             </div>
@@ -65,14 +111,22 @@ export async function renderDashboardView(container) {
             </div>
           </div>
 
-          <!-- Operational Health Index Gauge & Component Grid -->
+          <!-- Operational Health Index Radial Gauge & Component Grid -->
           <div style="display: grid; grid-template-columns: 260px 1fr; gap: 16px; margin-bottom: 20px;" id="health-index-container">
-            <!-- Health Score Card -->
-            <div style="background: var(--bg-surface); padding: 20px; border-radius: var(--radius-md); border: 1px solid var(--border-subtle); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;">
-              <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">MEGATRON KPI</span>
-              <div style="font-size: 0.85rem; color: #fff; font-weight: 700; margin-top: 4px;">Operational Health Index</div>
-              <div id="health-score-value" style="font-size: 3.2rem; font-weight: 800; color: #38BDF8; line-height: 1.1; margin: 10px 0;">--</div>
-              <span id="health-status-badge" class="badge" style="font-size: 0.78rem; padding: 3px 10px; font-weight: 700;">CALCULATING</span>
+            <!-- Radial Health Score Card -->
+            <div style="background: var(--bg-surface); padding: 18px; border-radius: var(--radius-md); border: 1px solid var(--border-subtle); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;">
+              <span style="font-size: 0.72rem; color: var(--text-muted); font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; font-family: var(--font-mono);">HEALTH CORE</span>
+              <div class="radial-health-core">
+                <svg class="health-gauge-svg" viewBox="0 0 160 160" width="130" height="130">
+                  <circle class="gauge-bg" cx="80" cy="80" r="62" stroke-width="10" fill="none"></circle>
+                  <circle id="health-gauge-progress" class="gauge-progress" cx="80" cy="80" r="62" stroke="#38BDF8" stroke-width="10" stroke-linecap="round" fill="none" stroke-dasharray="389.55" stroke-dashoffset="389.55" transform="rotate(-90 80 80)"></circle>
+                </svg>
+                <div class="health-center-data">
+                  <span class="health-center-score" id="health-score-value">--</span>
+                  <span class="health-center-max">/ 100</span>
+                </div>
+              </div>
+              <span id="health-status-badge" class="badge" style="font-size: 0.75rem; padding: 3px 10px; font-weight: 800;">CALCULATING</span>
             </div>
 
             <!-- Health Components Breakdown -->
@@ -86,11 +140,23 @@ export async function renderDashboardView(container) {
             </div>
           </div>
 
-          <!-- Opportunity & Risk Radar Grid -->
-          <div style="margin-bottom: 16px;">
-            <div style="font-size: 0.85rem; font-weight: 700; color: #fff; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
-              <i class="fas fa-radar" style="color: #FBBF24;"></i> Opportunity & Risk Radar
+          <!-- Futuristic Opportunity & Risk Radar Monitoring Panel -->
+          <div class="radar-monitor-panel" style="margin-bottom: 16px;">
+            <div style="font-size: 0.85rem; font-weight: 700; color: #fff; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between;">
+              <span style="display: flex; align-items: center; gap: 8px;">
+                <i class="fas fa-satellite-dish" style="color: #38BDF8;"></i> Opportunity & Risk Radar
+              </span>
+              <span style="font-size: 0.7rem; color: #38BDF8; font-family: var(--font-mono);">ACTIVE SCAN • 360° TELEMETRY</span>
             </div>
+            
+            <div class="radar-sweep-screen">
+              <div class="radar-grid-lines"></div>
+              <div class="radar-range-ring ring-1"></div>
+              <div class="radar-range-ring ring-2"></div>
+              <div class="radar-range-ring ring-3"></div>
+              <div class="radar-sweep-beam"></div>
+            </div>
+
             <div class="grid-2" id="ops-radar-grid" style="gap: 12px;">
               <!-- Radar items populated dynamically -->
             </div>
@@ -119,7 +185,7 @@ export async function renderDashboardView(container) {
         </div>
 
         <!-- Section 2: TODAY'S BUSINESS BRIEF -->
-        <div class="card" style="margin-bottom: 24px; border-top: 3px solid var(--accent-primary);">
+        <div id="daily-brief-card" class="card stagger-item stagger-5" style="margin-bottom: 24px; border-top: 3px solid var(--accent-primary);">
           <div class="card-header" style="margin-bottom: 16px;">
             <div>
               <h2 class="card-title" style="font-size: 1.1rem; color: #fff; text-transform: uppercase; letter-spacing: 0.05em;">
@@ -192,7 +258,7 @@ export async function renderDashboardView(container) {
         </div>
 
         <!-- Section 4: AI Sales Manager — Priority Ranking & Next Best Actions -->
-        <div class="card" style="margin-bottom: 24px; border-top: 3px solid #10B981;" id="ai-sales-manager-section">
+        <div class="card stagger-item stagger-6" style="margin-bottom: 24px; border-top: 3px solid #10B981;" id="ai-sales-manager-section">
           <div class="card-header" style="margin-bottom: 16px; flex-wrap: wrap; gap: 12px;">
             <div>
               <div style="display: flex; align-items: center; gap: 8px;">
@@ -242,7 +308,7 @@ export async function renderDashboardView(container) {
         </div>
 
         <!-- Section 5: AI Follow-up Assistant with Human-in-the-loop Approval -->
-        <div class="card" style="margin-bottom: 24px; border-top: 3px solid var(--accent-ai);" id="ai-followup-assistant-section">
+        <div class="card stagger-item stagger-7" style="margin-bottom: 24px; border-top: 3px solid var(--accent-ai);" id="ai-followup-assistant-section">
           <div class="card-header" style="margin-bottom: 16px;">
             <div>
               <h2 class="card-title" style="font-size: 1.1rem; color: #fff; text-transform: uppercase; letter-spacing: 0.05em;">
@@ -335,7 +401,7 @@ export async function renderDashboardView(container) {
         </div>
 
         <!-- Section 6: Business Impact Telemetry (No Fabricated Numbers) -->
-        <div class="card" style="margin-bottom: 24px;">
+        <div id="business-impact-section" class="card stagger-item stagger-8" style="margin-bottom: 24px;">
           <div class="card-header">
             <div>
               <h3 class="card-title"><i class="fas fa-chart-pie" style="color: var(--accent-info);"></i> Business Impact & Operational Telemetry</h3>
@@ -410,7 +476,7 @@ export async function renderDashboardView(container) {
           }).join('');
       }
 
-      // 1. Render Proactive Alert Banner (Deduplicated)
+      // 1. Render Proactive Alert Stream (Deduplicated, Multi-Severity Individual Cards)
       const alertsContainer = container.querySelector('#urgent-alerts-container');
       alertsContainer.innerHTML = '';
       const rawAlerts = opsAlerts?.alerts || brief.alerts || [];
@@ -425,43 +491,116 @@ export async function renderDashboardView(container) {
       }
 
       if (activeAlerts.length > 0) {
-        const criticalAlerts = activeAlerts.filter(a => a.severity === 'CRITICAL');
-        const alertType = criticalAlerts.length > 0 ? 'danger' : 'warning';
-        alertsContainer.innerHTML = `
-          <div class="alert-banner ${alertType}" style="margin-bottom: 20px;">
-            <div class="alert-content">
-              <i class="fas fa-triangle-exclamation" style="font-size: 1.3rem;"></i>
-              <div>
-                <strong>${criticalAlerts.length > 0 ? 'Critical Operational Attention Required:' : 'Operational Notices:'}</strong>
-                <div style="font-size: 0.85rem; margin-top: 2px;">
-                  ${activeAlerts.map(a => escapeHtml(a.title ? `${a.title}: ${a.reason}` : a.message)).join(' • ')}
+        alertsContainer.className = 'alerts-stream-container stagger-item stagger-2';
+        alertsContainer.innerHTML = activeAlerts.map(a => {
+          const severity = (a.severity || 'INFO').toUpperCase();
+          const title = a.title || (severity === 'CRITICAL' ? 'Critical Operational Notice' : 'Operational Notice');
+          const reason = a.reason || a.message || '';
+          
+          let iconClass = 'fa-circle-info';
+          let cardClass = 'alert-card-info';
+          let badgeClass = 'alert-badge-info';
+          let btnClass = 'btn-secondary';
+          let btnLabel = 'Take Action';
+          let btnLink = '#/leads';
+
+          if (severity === 'CRITICAL') {
+            iconClass = 'fa-circle-exclamation';
+            cardClass = 'alert-card-critical';
+            badgeClass = 'alert-badge-critical';
+            btnClass = 'btn-danger';
+            btnLabel = 'Resolve Bottleneck';
+            btnLink = '#/leads';
+          } else if (severity === 'WARNING') {
+            iconClass = 'fa-triangle-exclamation';
+            cardClass = 'alert-card-warning';
+            badgeClass = 'alert-badge-warning';
+            btnClass = 'btn-secondary';
+            btnLabel = a.type === 'APPROVAL_BACKLOG' ? 'Open Approvals' : 'Review Warning';
+            btnLink = a.type === 'APPROVAL_BACKLOG' ? '#/approvals' : '#/tasks';
+          } else {
+            iconClass = 'fa-calendar-check';
+            cardClass = 'alert-card-info';
+            badgeClass = 'alert-badge-info';
+            btnClass = 'btn-secondary';
+            btnLabel = a.type === 'SITE_VISITS_TODAY' ? 'View Schedule' : 'View Details';
+            btnLink = '#/leads';
+          }
+
+          return `
+            <div class="alert-card-item ${cardClass}">
+              <div class="alert-card-content">
+                <div class="alert-card-icon-wrap">
+                  <i class="fas ${iconClass}"></i>
+                </div>
+                <div class="alert-card-text">
+                  <div class="alert-card-header">
+                    <span class="${badgeClass}">${severity}</span>
+                    <strong class="alert-card-title">${escapeHtml(title)}</strong>
+                  </div>
+                  <div class="alert-card-reason">${escapeHtml(reason)}</div>
                 </div>
               </div>
+              <div class="alert-card-action">
+                <a href="${btnLink}" class="btn ${btnClass} btn-sm">${escapeHtml(btnLabel)}</a>
+              </div>
             </div>
-            <a href="#/leads" class="btn btn-sm" style="background: rgba(255,255,255,0.2); color: #fff;">Take Action</a>
-          </div>
-        `;
+          `;
+        }).join('');
+      } else {
+        alertsContainer.className = '';
       }
 
       // 2. Render Operational Health Index & Components
       const healthScoreValEl = container.querySelector('#health-score-value');
       const healthBadgeEl = container.querySelector('#health-status-badge');
       const healthCompGrid = container.querySelector('#health-components-grid');
+      const healthGaugeEl = container.querySelector('#health-gauge-progress');
+
+      // Update Hero Telemetry
+      const heroHealthEl = container.querySelector('#hero-telemetry-health');
+      const heroRiskEl = container.querySelector('#hero-telemetry-risk');
+      const heroActionsEl = container.querySelector('#hero-telemetry-actions');
+      const heroApprovalsEl = container.querySelector('#hero-telemetry-approvals');
 
       if (opsHealth) {
-        healthScoreValEl.textContent = `${opsHealth.score}`;
+        animateNumber(healthScoreValEl, opsHealth.score, 650);
         healthBadgeEl.textContent = opsHealth.status;
 
         const statusColors = {
-          OPTIMAL: { bg: 'rgba(16, 185, 129, 0.2)', text: '#34D399' },
-          STABLE: { bg: 'rgba(59, 130, 246, 0.2)', text: '#60A5FA' },
-          ATTENTION_REQUIRED: { bg: 'rgba(245, 158, 11, 0.2)', text: '#FBBF24' },
-          CRITICAL: { bg: 'rgba(239, 68, 68, 0.2)', text: '#F87171' },
-          NO_DATA: { bg: 'rgba(107, 114, 128, 0.2)', text: '#9CA3AF' }
+          OPTIMAL: { bg: 'rgba(52, 211, 153, 0.2)', text: '#34D399', stroke: '#34D399' },
+          STABLE: { bg: 'rgba(56, 189, 248, 0.2)', text: '#38BDF8', stroke: '#38BDF8' },
+          ATTENTION_REQUIRED: { bg: 'rgba(251, 191, 36, 0.2)', text: '#FBBF24', stroke: '#FBBF24' },
+          CRITICAL: { bg: 'rgba(248, 113, 113, 0.2)', text: '#F87171', stroke: '#F87171' },
+          NO_DATA: { bg: 'rgba(107, 114, 128, 0.2)', text: '#9CA3AF', stroke: '#6B7280' }
         };
         const stStyle = statusColors[opsHealth.status] || statusColors.STABLE;
         healthBadgeEl.style.background = stStyle.bg;
         healthBadgeEl.style.color = stStyle.text;
+
+        if (healthGaugeEl) {
+          const circ = 389.55;
+          const scoreVal = Math.min(Math.max(opsHealth.score || 0, 0), 100);
+          const offset = circ * (1 - scoreVal / 100);
+          healthGaugeEl.style.strokeDashoffset = offset;
+          healthGaugeEl.style.stroke = stStyle.stroke;
+        }
+
+        if (heroHealthEl) heroHealthEl.textContent = `${opsHealth.score} / 100`;
+        if (heroRiskEl) {
+          heroRiskEl.textContent = (opsHealth.status || 'STABLE').replace('_', ' ');
+          heroRiskEl.style.color = stStyle.text;
+        }
+        if (heroActionsEl) {
+          const actionsCount = (attentionLeads?.length || 0) + (todayTasks?.length || 0);
+          heroActionsEl.textContent = `${actionsCount}`;
+        }
+        if (heroApprovalsEl) {
+          const approvalsCount = opsHealth.components?.approvalBacklog?.score !== undefined 
+            ? (25 - opsHealth.components.approvalBacklog.score > 0 ? Math.ceil((25 - opsHealth.components.approvalBacklog.score) / 5) : 0)
+            : 0;
+          heroApprovalsEl.textContent = `${approvalsCount}`;
+        }
 
         const comp = opsHealth.components || {};
         healthCompGrid.innerHTML = `
@@ -513,12 +652,13 @@ export async function renderDashboardView(container) {
           opsRadarGrid.innerHTML = combinedRadar.map(item => {
             const isCritical = item.severity === 'CRITICAL';
             const isWarning = item.severity === 'WARNING';
+            const riskClass = isCritical ? 'risk-card-critical pulse-subtle' : (isWarning ? 'risk-card-warning' : 'risk-card-info');
             const badgeBg = isCritical ? 'rgba(239, 68, 68, 0.2)' : (isWarning ? 'rgba(245, 158, 11, 0.2)' : 'rgba(59, 130, 246, 0.2)');
             const badgeText = isCritical ? '#F87171' : (isWarning ? '#FBBF24' : '#60A5FA');
             const borderCol = isCritical ? '#EF4444' : (isWarning ? '#F59E0B' : '#3B82F6');
 
             return `
-              <div style="background: var(--bg-surface); padding: 14px 16px; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); border-left: 4px solid ${borderCol};">
+              <div class="stagger-item ${riskClass}" style="background: var(--bg-surface); padding: 14px 16px; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); border-left: 4px solid ${borderCol};">
                 <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px;">
                   <div>
                     <span class="badge" style="background: ${badgeBg}; color: ${badgeText}; font-size: 0.72rem; font-weight: 700;">

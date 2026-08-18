@@ -92,13 +92,13 @@ function renderMainLayout(activeRoute, routeContext = {}) {
         <aside class="sidebar" id="app-sidebar">
           <div class="sidebar-header">
             <div class="brand-logo">
-              <i class="fas fa-shield-halved"></i>
+              <i class="fas fa-microchip"></i>
             </div>
             <div class="brand-info">
               <div class="brand-title">
-                MEGADRONE <span class="brand-badge">OS</span>
+                MEGATRON <span class="brand-badge">AI OS</span>
               </div>
-              <div class="brand-org" id="sidebar-org-name">${escapeHtml(state.org?.name || 'Operations')}</div>
+              <div class="brand-org" id="sidebar-org-name">${escapeHtml(state.org?.name || 'Command Center')}</div>
             </div>
           </div>
 
@@ -172,9 +172,27 @@ function renderMainLayout(activeRoute, routeContext = {}) {
               <h2 class="page-heading" id="topbar-page-title">${formatPageTitle(activeRoute)}</h2>
             </div>
             <div class="topbar-right">
-              <div class="ai-status-indicator">
-                <span class="status-dot"></span>
-                <span>AI Governance: <strong>Active</strong></span>
+              <div class="command-telemetry-strip">
+                <div class="telemetry-chip" title="Local/Cloud AI Orchestrator">
+                  <span class="pulse-dot"></span>
+                  <span class="chip-label">AI CORE</span>
+                  <span class="chip-val">ONLINE</span>
+                </div>
+                <div class="telemetry-chip" title="Ollama Neural Runtime">
+                  <span class="pulse-dot ai"></span>
+                  <span class="chip-label">LOCAL OLLAMA</span>
+                  <span class="chip-val">ONLINE</span>
+                </div>
+                <div class="telemetry-chip" title="Human-in-the-Loop Governance Gate">
+                  <span class="pulse-dot warning"></span>
+                  <span class="chip-label">GOVERNANCE</span>
+                  <span class="chip-val">ACTIVE</span>
+                </div>
+                <div class="telemetry-chip" title="Multi-Tenant Scoped SQLite Database">
+                  <span class="pulse-dot success"></span>
+                  <span class="chip-label">DB</span>
+                  <span class="chip-val">LIVE</span>
+                </div>
               </div>
             </div>
           </header>
@@ -208,6 +226,11 @@ function renderMainLayout(activeRoute, routeContext = {}) {
     const titleEl = document.getElementById('topbar-page-title');
     if (titleEl) titleEl.textContent = formatPageTitle(activeRoute);
   }
+
+  // Trigger smooth page transition
+  mainContent.classList.remove('page-transition');
+  void mainContent.offsetWidth; // Force reflow
+  mainContent.classList.add('page-transition');
 
   // Render view
   const renderFn = ROUTES[activeRoute] || renderDashboardView;

@@ -66,6 +66,13 @@ export async function renderLeadsView(container, context = {}) {
 
   async function loadLeads() {
     const tbody = container.querySelector('#leads-table-body');
+    tbody.innerHTML = `
+      <tr><td colspan="7" style="padding: 10px 16px;"><div class="skeleton skeleton-row"></div></td></tr>
+      <tr><td colspan="7" style="padding: 10px 16px;"><div class="skeleton skeleton-row"></div></td></tr>
+      <tr><td colspan="7" style="padding: 10px 16px;"><div class="skeleton skeleton-row"></div></td></tr>
+      <tr><td colspan="7" style="padding: 10px 16px;"><div class="skeleton skeleton-row"></div></td></tr>
+      <tr><td colspan="7" style="padding: 10px 16px;"><div class="skeleton skeleton-row"></div></td></tr>
+    `;
     try {
       const params = {};
       if (currentStatusFilter) params.status = currentStatusFilter;

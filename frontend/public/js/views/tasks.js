@@ -59,6 +59,12 @@ export async function renderTasksView(container) {
 
   async function loadTasks() {
     const tbody = container.querySelector('#tasks-table-body');
+    tbody.innerHTML = `
+      <tr><td colspan="7" style="padding: 10px 16px;"><div class="skeleton skeleton-row"></div></td></tr>
+      <tr><td colspan="7" style="padding: 10px 16px;"><div class="skeleton skeleton-row"></div></td></tr>
+      <tr><td colspan="7" style="padding: 10px 16px;"><div class="skeleton skeleton-row"></div></td></tr>
+      <tr><td colspan="7" style="padding: 10px 16px;"><div class="skeleton skeleton-row"></div></td></tr>
+    `;
     try {
       let tasks = [];
       const today = new Date().toISOString().slice(0, 10);

@@ -1,31 +1,44 @@
 /**
  * UI Components & Helpers
+ * Phase 6.3 - Premium Business SaaS Motion & UX Polish
  */
 
-export function showToast(message, type = 'info', duration = 4000) {
+export function showToast(message, type = 'info', duration = 3500) {
   const container = document.getElementById('toast-container');
   if (!container) return;
 
   const toast = document.createElement('div');
-  toast.className = `toast ${type}`;
+  toast.className = `toast ${type} toast-enter`;
   
-  let iconClass = 'fa-info-circle';
-  if (type === 'success') iconClass = 'fa-check-circle';
-  if (type === 'error') iconClass = 'fa-exclamation-triangle';
+  let iconClass = 'fa-circle-info';
+  if (type === 'success') iconClass = 'fa-circle-check';
+  if (type === 'error') iconClass = 'fa-triangle-exclamation';
+  if (type === 'warning') iconClass = 'fa-triangle-exclamation';
 
   toast.innerHTML = `
-    <i class="fas ${iconClass}"></i>
-    <span>${escapeHtml(message)}</span>
+    <i class="fas ${iconClass}" style="font-size: 1.1rem; flex-shrink: 0;"></i>
+    <span style="flex: 1; line-height: 1.4;">${escapeHtml(message)}</span>
+    <button style="background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 2px 4px;" aria-label="Close notification">&times;</button>
   `;
 
   container.appendChild(toast);
 
-  setTimeout(() => {
-    toast.style.opacity = '0';
-    toast.style.transform = 'translateX(100%)';
-    toast.style.transition = 'all 0.3s ease';
-    setTimeout(() => toast.remove(), 300);
-  }, duration);
+  const closeBtn = toast.querySelector('button');
+  let timeoutId = null;
+
+  const removeToast = () => {
+    if (timeoutId) clearTimeout(timeoutId);
+    toast.classList.add('toast-exit');
+    setTimeout(() => {
+      if (toast.parentNode) toast.remove();
+    }, 220);
+  };
+
+  if (closeBtn) {
+    closeBtn.addEventListener('click', removeToast);
+  }
+
+  timeoutId = setTimeout(removeToast, duration);
 }
 
 export function showModal({ title, bodyHtml, footerButtons = [], onClose = null }) {
@@ -45,7 +58,7 @@ export function showModal({ title, bodyHtml, footerButtons = [], onClose = null 
     <div class="modal-dialog">
       <div class="modal-header">
         <h3 class="modal-title">${escapeHtml(title)}</h3>
-        <button class="modal-close" id="modal-close-x"><i class="fas fa-times"></i></button>
+        <button class="modal-close" id="modal-close-x" aria-label="Close modal"><i class="fas fa-times"></i></button>
       </div>
       <div class="modal-body">
         ${bodyHtml}
@@ -56,12 +69,24 @@ export function showModal({ title, bodyHtml, footerButtons = [], onClose = null 
 
   container.appendChild(overlay);
 
+  let isClosing = false;
   const closeModal = () => {
-    overlay.remove();
-    if (onClose) onClose();
+    if (isClosing) return;
+    isClosing = true;
+    overlay.classList.add('modal-exit');
+    document.removeEventListener('keydown', handleKeyDown);
+    setTimeout(() => {
+      if (overlay.parentNode) overlay.remove();
+      if (onClose) onClose();
+    }, 190);
   };
 
-  overlay.querySelector('#modal-close-x').addEventListener('click', closeModal);
+  const handleKeyDown = (e) => {
+    if (e.key === 'Escape') closeModal();
+  };
+  document.addEventListener('keydown', handleKeyDown);
+
+  overlay.querySelector('#modal-close-x')?.addEventListener('click', closeModal);
   overlay.addEventListener('click', (e) => {
     if (e.target === overlay) closeModal();
   });
@@ -81,6 +106,45 @@ export function showModal({ title, bodyHtml, footerButtons = [], onClose = null 
   });
 
   return { close: closeModal, element: overlay };
+}
+
+/**
+ * Smooth numeric counter animation using requestAnimationFrame
+ * Respects prefers-reduced-motion
+ */
+export function animateNumber(element, target, duration = 600) {
+  if (!element) return;
+  const targetNum = Number(target);
+  if (isNaN(targetNum)) {
+    element.textContent = target;
+    return;
+  }
+
+  // Instant display if reduced motion is preferred
+  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    element.textContent = targetNum;
+    return;
+  }
+
+  const startTime = performance.now();
+  const startVal = 0;
+
+  function step(currentTime) {
+    const elapsed = currentTime - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+    // Cubic ease-out curve
+    const easeOutProgress = 1 - Math.pow(1 - progress, 3);
+    const currentVal = Math.round(startVal + (targetNum - startVal) * easeOutProgress);
+    element.textContent = currentVal;
+
+    if (progress < 1) {
+      requestAnimationFrame(step);
+    } else {
+      element.textContent = targetNum;
+    }
+  }
+
+  requestAnimationFrame(step);
 }
 
 export function escapeHtml(str) {
