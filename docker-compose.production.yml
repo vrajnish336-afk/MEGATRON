@@ -1,0 +1,101 @@
+version: '3.8'
+
+# ==============================================================================
+# MEGATRON Business OS - Production Multi-Container Compose Stack
+# Fully Isolated Private AI, Automatic HTTPS Reverse Proxy & Persistent Storage
+# ==============================================================================
+
+services:
+  # ----------------------------------------------------------------------------
+  # 1. Reverse Proxy & Automatic TLS Termination (Public Entrypoint)
+  # ----------------------------------------------------------------------------
+  caddy:
+    image: caddy:2-alpine
+    container_name: megatron-caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+      - caddy_logs:/var/log/caddy
+    networks:
+      - megatron-internal
+    depends_on:
+      megatron-app:
+        condition: service_healthy
+
+  # ----------------------------------------------------------------------------
+  # 2. MEGATRON Application Backend & SPA Frontend Server
+  # ----------------------------------------------------------------------------
+  megatron-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: megatron-business-os
+    restart: unless-stopped
+    # Port 5000 is internal-only; not exposed to the public host
+    expose:
+      - "5000"
+    env_file:
+      - ./deploy/.env.production
+    volumes:
+      - megatron_data:/app/data
+      - megatron_logs:/app/logs
+    networks:
+      - megatron-internal
+    depends_on:
+      - ollama
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:5000/api/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  # ----------------------------------------------------------------------------
+  # 3. Private Local Ollama Neural Engine (Zero Public Exposure)
+  # ----------------------------------------------------------------------------
+  ollama:
+    image: ollama/ollama:latest
+    container_name: megatron-ollama
+    restart: unless-stopped
+    # Port 11434 is internal-only; not exposed to the public host
+    expose:
+      - "11434"
+    volumes:
+      - ollama_models:/root/.ollama
+    networks:
+      - megatron-internal
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+# ------------------------------------------------------------------------------
+# Private Isolated Network
+# ------------------------------------------------------------------------------
+networks:
+  megatron-internal:
+    driver: bridge
+
+# ------------------------------------------------------------------------------
+# Named Persistent Storage Volumes
+# ------------------------------------------------------------------------------
+volumes:
+  megatron_data:
+    name: megatron_production_data
+  megatron_logs:
+    name: megatron_production_logs
+  caddy_data:
+    name: megatron_caddy_data
+  caddy_config:
+    name: megatron_caddy_config
+  caddy_logs:
+    name: megatron_caddy_logs
+  ollama_models:
+    name: megatron_ollama_models

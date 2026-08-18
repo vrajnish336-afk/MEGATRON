@@ -1,0 +1,42 @@
+# ==============================================================================
+# MEGATRON Business OS - Production Caddy Reverse Proxy Configuration
+# Automatic HTTPS & Hardened Security Headers
+# ==============================================================================
+
+YOUR_DOMAIN_HERE {
+    # Reverse proxy HTTP traffic to the internal MEGATRON backend service
+    reverse_proxy megatron-app:5000 {
+        header_up Host {host}
+        header_up X-Real-IP {remote_host}
+        header_up X-Forwarded-For {remote_host}
+        header_up X-Forwarded-Proto {scheme}
+    }
+
+    # Compression
+    encode zstd gzip
+
+    # Production Security Headers
+    header {
+        # Strict Transport Security (HSTS)
+        Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+        # Prevent MIME-sniffing
+        X-Content-Type-Options "nosniff"
+        # Prevent Clickjacking
+        X-Frame-Options "DENY"
+        # Referrer Policy
+        Referrer-Policy "strict-origin-when-cross-origin"
+        # Permissions Policy
+        Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=()"
+        # Hide Caddy Server signature
+        -Server
+    }
+
+    # Access Logs
+    log {
+        output file /var/log/caddy/megatron_access.log {
+            roll_size 10MB
+            roll_keep 10
+        }
+        format json
+    }
+}
